@@ -34,7 +34,7 @@ All data is processed under appropriate data protection laws (such as LGPD in Br
     {
       id: "sharing",
       title: "4. Third-Party Protocols and Integrations",
-      content: `Contextio interacts with Stellar Horizon RPC endpoints and decentralized protocol smart contracts (specifically Blend lending pools and DeFindex index vaults). Your public addresses and transaction payloads are shared with these decentralized networks during rebalances and deposits. We also link to external anchors (such as testanchor.stellar.org) for SEP-24/31 off-ramp capabilities. These third-party protocols have their own rules, and we do not assume liability for their data handling.`,
+      content: `Contextio interacts with Stellar Horizon RPC endpoints and decentralized protocol smart contracts (specifically Blend lending pools and DeFindex index vaults). Your public addresses and transaction payloads are shared with these decentralized networks during rebalances and deposits. We link to an external anchor (testanchor.stellar.org) for SEP-24 interactive off-ramp capabilities, and operate our own self-hosted Anchor Platform for SEP-31/38 institutional settlement discovery and quoting — a separate Contextio-operated system, not a third party, though still a distinct service from the main application. These third-party protocols have their own rules, and we do not assume liability for their data handling.`,
     },
     {
       id: "rights",
@@ -75,7 +75,7 @@ Todos los datos se procesan bajo las leyes de protección de datos correspondien
     {
       id: "sharing",
       title: "4. Protocolos e Integraciones de Terceros",
-      content: `Contextio interactúa con endpoints de Stellar Horizon RPC y contratos inteligentes de protocolos descentralizados (específicamente pools de préstamos Blend y bóvedas de índices DeFindex). Sus direcciones públicas y payloads de transacciones se comparten con estas redes descentralizadas durante los rebalanceos y depósitos. También nos vinculamos a anchors externos (como testanchor.stellar.org) para capacidades de retiro SEP-24/31. Estos protocolos de terceros tienen sus propias reglas, y no asumimos responsabilidad por su manejo de datos.`,
+      content: `Contextio interactúa con endpoints de Stellar Horizon RPC y contratos inteligentes de protocolos descentralizados (específicamente pools de préstamos Blend y bóvedas de índices DeFindex). Sus direcciones públicas y payloads de transacciones se comparten con estas redes descentralizadas durante los rebalanceos y depósitos. Nos vinculamos a un anchor externo (testanchor.stellar.org) para las capacidades de retiro interactivo SEP-24, y operamos nuestro propio Anchor Platform self-hosted para el descubrimiento y cotización institucional SEP-31/38 — un sistema operado por Contextio, no un tercero, aunque sigue siendo un servicio distinto de la aplicación principal. Estos protocolos de terceros tienen sus propias reglas, y no asumimos responsabilidad por su manejo de datos.`,
     },
     {
       id: "rights",
@@ -116,7 +116,7 @@ Todos os dados são processados sob as leis de proteção de dados apropriadas (
     {
       id: "sharing",
       title: "4. Protocolos e Integrações de Terceiros",
-      content: `A Contextio interage com endpoints Stellar Horizon RPC e contratos inteligentes de locais descentralizados (especificamente pools de empréstimos Blend e index vaults DeFindex). Seus endereços públicos e payloads de transação são compartilhados com essas redes descentralizadas durante rebalanceamentos e depósitos. Também nos conectamos a anchors externos (como testanchor.stellar.org) para recursos de retirada SEP-24/31. Esses protocolos terceiros têm regras próprias e não assumimos responsabilidade por seu manuseio de dados.`,
+      content: `A Contextio interage com endpoints Stellar Horizon RPC e contratos inteligentes de locais descentralizados (especificamente pools de empréstimos Blend e index vaults DeFindex). Seus endereços públicos e payloads de transação são compartilhados com essas redes descentralizadas durante rebalanceamentos e depósitos. Conectamos a um anchor externo (testanchor.stellar.org) para os recursos de retirada interativa SEP-24, e operamos nosso próprio Anchor Platform self-hosted para descoberta e cotação institucional SEP-31/38 — um sistema operado pela Contextio, não um terceiro, embora ainda seja um serviço distinto da aplicação principal. Esses protocolos terceiros têm regras próprias e não assumimos responsabilidade por seu manuseio de dados.`,
     },
     {
       id: "rights",

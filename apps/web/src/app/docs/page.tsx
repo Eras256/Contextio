@@ -197,7 +197,7 @@ export default function DocsPage() {
                   <span className="rounded bg-sky-500/10 border border-sky-500/30 px-2 py-0.5 font-mono text-xs font-bold text-sky-400 uppercase">GET</span>
                   <span className="font-mono text-sm text-white break-all">/api/v1/public/anchor/sep31</span>
                 </div>
-                <p className="text-xs text-slate-400">Real, read-only discovery against the reference anchor&apos;s SEP-38 quote server (indicative FX prices) and SEP-31 direct-payment server (accepted institutional settlement assets) — the mechanism a licensed anchor would use to settle payroll cross-border. No funds move on either call.</p>
+                <p className="text-xs text-slate-400">Real, read-only discovery against Contextio&apos;s own self-hosted Anchor Platform (SEP-38 quote server for indicative FX prices, SEP-31 direct-payment server for accepted institutional settlement assets — XLM against USD/BRL/ARS/COP) — the mechanism a licensed anchor would use to settle payroll cross-border. No funds move on either call.</p>
               </div>
 
               {/* Relayer */}
