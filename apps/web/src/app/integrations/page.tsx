@@ -6,7 +6,7 @@ import { bps } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { resolveApiUrl, useNetwork } from "@/lib/network";
 
-type Status = "live" | "mock" | "ready" | "prod";
+type Status = "live" | "mock" | "ready" | "prod" | "pending";
 
 /** Loading → the fetch hasn't resolved yet. Off → the API answered but said
  *  `live:false` (not configured / not offered on this network) — distinct
@@ -244,7 +244,7 @@ export default function IntegrationsPage() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {t("pages.integrations.dfxView")} ↗
+                  {t("pages.integrations.oracleView")} ↗
                 </a>
               </div>
             ) : (
@@ -318,9 +318,9 @@ export default function IntegrationsPage() {
         </Card>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <IntegrationCard t={t} name={t("pages.integrations.pixName")} body={t("pages.integrations.pixBody")} status="prod" />
-          <IntegrationCard t={t} name={t("pages.integrations.transfersName")} body={t("pages.integrations.transfersBody")} status="prod" />
-          <IntegrationCard t={t} name={t("pages.integrations.brebName")} body={t("pages.integrations.brebBody")} status="prod" />
+          <IntegrationCard t={t} name={t("pages.integrations.pixName")} body={t("pages.integrations.pixBody")} status="pending" />
+          <IntegrationCard t={t} name={t("pages.integrations.transfersName")} body={t("pages.integrations.transfersBody")} status="pending" />
+          <IntegrationCard t={t} name={t("pages.integrations.brebName")} body={t("pages.integrations.brebBody")} status="pending" />
         </div>
       </section>
 
@@ -431,12 +431,13 @@ function FetchedFooter({ t, f }: { t: (k: string) => string; f: { s: "loading" |
   );
 }
 
-const STATUS_TONE: Record<Status, "success" | "warn" | "info"> = { live: "success", mock: "warn", ready: "info", prod: "info" };
+const STATUS_TONE: Record<Status, "success" | "warn" | "info"> = { live: "success", mock: "warn", ready: "info", prod: "info", pending: "warn" };
 const STATUS_KEY: Record<Status, string> = {
   live: "pages.integrations.statusLive",
   mock: "pages.integrations.statusMock",
   ready: "pages.integrations.statusReady",
   prod: "pages.integrations.statusProd",
+  pending: "pages.integrations.statusPending",
 };
 
 function IntegrationCard({
