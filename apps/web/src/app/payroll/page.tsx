@@ -9,6 +9,7 @@ import { useT } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { useNetwork } from "@/lib/network";
 import { signWalletTransaction } from "@/lib/wallet";
+import { PayrollConfirmModal } from "@/components/PayrollConfirmModal";
 
 const txUrl = (h: string, network: "testnet" | "mainnet") =>
   `https://stellar.expert/explorer/${network === "mainnet" ? "public" : "testnet"}/tx/${h}`;
@@ -29,6 +30,7 @@ export default function PayrollPage() {
   const runsQ = useLiveData(api.runs, [], { realtimeTable: "payroll_runs" });
   const [running, setRunning] = useState(false);
   const [runMsg, setRunMsg] = useState<string | null>(null);
+  const [confirmingRun, setConfirmingRun] = useState(false);
 
   if (!accessToken) {
     return (
@@ -63,7 +65,7 @@ export default function PayrollPage() {
   // on-chain (testnet 1:100 scaled). Surfaces the real reason on failure.
   const runPayrollNow = async () => {
     if (running || !accessToken || !tenantId || !next?.scheduleId) return;
-    if (!window.confirm(tr("pages.payroll.runConfirm"))) return;
+    setConfirmingRun(false);
     setRunning(true);
     setRunMsg(null);
     try {
@@ -145,7 +147,7 @@ export default function PayrollPage() {
               on testnet. Payouts below is the mainnet-capable path. */}
           {network === "testnet" && next?.scheduleId && (
             <button
-              onClick={() => void runPayrollNow()}
+              onClick={() => setConfirmingRun(true)}
               disabled={running}
               className="btn-ghost text-xs disabled:opacity-40"
             >
@@ -172,9 +174,18 @@ export default function PayrollPage() {
               </div>
             ))}
           {runsQ.data.map((run) => (
-            <div key={run.id} className="rounded-lg border border-white/10 bg-ink-900/60 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2">
+            <div
+              key={run.id}
+              className={`rounded-lg border-l-2 border-y border-r border-white/10 bg-ink-900/60 p-3 sm:p-4 ${
+                run.status === "completed"
+                  ? "border-l-brand/60"
+                  : run.status === "failed"
+                    ? "border-l-amber-400/50"
+                    : "border-l-white/15"
+              }`}
+            >
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <Badge tone={run.status === "completed" ? "success" : run.status === "failed" ? "warn" : "default"}>
                     {tr(`pages.payroll.runStatus.${run.status}`)}
                   </Badge>
@@ -187,18 +198,21 @@ export default function PayrollPage() {
                     </span>
                   )}
                 </div>
-                <span className="font-mono text-xs text-slate-500">
+                <span className="shrink-0 font-mono text-xs text-slate-500">
                   {localDateTime(run.executedAt ?? run.createdAt)}
                 </span>
               </div>
-              {network === "testnet" && run.status === "completed" && (
-                <p className="mt-1 text-[11px] text-slate-500">
-                  {usd(Number(run.totalAmount || 0) / 100)} {run.asset} · {tr("pages.payroll.runsScaledNote")}
-                </p>
-              )}
-              <div className="mt-2 text-xs">
+              <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-t border-white/5 pt-2.5 text-xs">
+                {network === "testnet" && run.status === "completed" ? (
+                  <span className="font-mono text-slate-400">
+                    <span className="font-semibold text-brand">{usd(Number(run.totalAmount || 0) / 100)} {run.asset}</span>{" "}
+                    · {tr("pages.payroll.runsScaledNote")}
+                  </span>
+                ) : (
+                  <span />
+                )}
                 {run.stellarTxHash && !run.stellarTxHash.startsWith("sim:") ? (
-                  <a href={txUrl(run.stellarTxHash, network)} target="_blank" rel="noreferrer" className="font-mono text-brand hover:underline">
+                  <a href={txUrl(run.stellarTxHash, network)} target="_blank" rel="noreferrer" className="font-mono text-accent hover:underline">
                     tx {shortHash(run.stellarTxHash, 8, 6)} ↗
                   </a>
                 ) : (
@@ -212,6 +226,17 @@ export default function PayrollPage() {
           )}
         </div>
       </Card>
+
+      {confirmingRun && next && (
+        <PayrollConfirmModal
+          employeeCount={next.employeeCount ?? active.length}
+          grossAmount={required}
+          scaledAmount={required / 100}
+          asset={next.asset}
+          onConfirm={() => void runPayrollNow()}
+          onCancel={() => setConfirmingRun(false)}
+        />
+      )}
 
       {/* Self-custody Payouts — the mainnet-capable path (see boot guard). */}
       {next?.scheduleId && <PayoutsPanel auth={{ accessToken, tenantId: tenantId! }} address={address} scheduleId={next.scheduleId} network={network} />}
