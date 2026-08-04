@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AuthControls } from "@/components/AuthControls";
@@ -18,15 +19,39 @@ const SECTIONS = [
   { href: "/docs", key: "nav.docs" },
 ] as const;
 
+/**
+ * The full row (7 nav links + language + AI + wallet + CTA) only ever fits
+ * comfortably at genuine desktop widths. `lg` (1024px) is also iPad landscape
+ * — too tight for all of that — so everything below `xl` (1280px) collapses
+ * behind a hamburger panel instead of fighting for space in one row. Nothing
+ * in the always-visible row is allowed to shrink below its content, so it
+ * can never silently clip.
+ */
 export function Navbar() {
   const pathname = usePathname();
   const t = useT();
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
+  const [mobileOpen, setMobileOpen] = useState(false);
+  // Client-side nav doesn't remount this component — close the panel
+  // ourselves once the route actually changes.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  const WorkspaceLink = ({ className }: { className: string }) => (
+    <Link href="/treasury" className={className}>
+      {t("nav.workspace")}
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </svg>
+    </Link>
+  );
+
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-ink-950/80 backdrop-blur max-w-full overflow-x-hidden">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-1.5 px-3 sm:gap-4 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-1.5 px-3 sm:gap-3 sm:px-6">
         {/* Brand + network */}
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
           <Link href="/" className="flex items-center gap-2">
@@ -36,13 +61,13 @@ export function Navbar() {
           <NetworkToggle />
         </div>
 
-        {/* Center nav */}
-        <nav className="hidden flex-1 items-center justify-center gap-0.5 lg:flex" aria-label="Primary">
+        {/* Center nav — desktop only, same threshold as the rest of the row */}
+        <nav className="hidden flex-1 items-center justify-center gap-0.5 xl:flex" aria-label="Primary">
           {SECTIONS.map((s) => (
             <Link
               key={s.href}
               href={s.href}
-              className={`nav-link ${isActive(s.href) ? "nav-link-active" : ""}`}
+              className={`nav-link whitespace-nowrap ${isActive(s.href) ? "nav-link-active" : ""}`}
             >
               {t(s.key)}
             </Link>
@@ -51,30 +76,66 @@ export function Navbar() {
 
         {/* Right cluster */}
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <LanguageSelector />
-          <AiSelector />
+          <div className="hidden items-center gap-1.5 xl:flex sm:gap-2">
+            <LanguageSelector />
+            <AiSelector />
+          </div>
           <AuthControls />
-          <Link href="/treasury" className="btn-primary hidden px-4 py-2 text-sm sm:inline-flex">
-            {t("nav.workspace")}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M5 12h14M13 6l6 6-6 6" />
-            </svg>
-          </Link>
+          <WorkspaceLink className="btn-primary hidden px-4 py-2 text-sm xl:inline-flex" />
+
+          {/* Hamburger — everything below xl lives here instead */}
+          <button
+            type="button"
+            onClick={() => setMobileOpen((o) => !o)}
+            className="inline-flex items-center justify-center rounded-lg border border-white/15 p-2 text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/20 xl:hidden"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav-panel"
+            aria-label={mobileOpen ? t("nav.closeMenu") : t("nav.menu")}
+          >
+            {mobileOpen ? <CloseIcon /> : <MenuIcon />}
+          </button>
         </div>
       </div>
 
-      {/* Mobile section scroller */}
-      <div className="flex gap-1 overflow-x-auto border-t border-white/5 px-4 py-2 lg:hidden">
-        {SECTIONS.map((s) => (
-          <Link
-            key={s.href}
-            href={s.href}
-            className={`nav-link whitespace-nowrap ${isActive(s.href) ? "nav-link-active" : ""}`}
-          >
-            {t(s.key)}
-          </Link>
-        ))}
-      </div>
+      {/* Mobile/tablet panel: replaces both the old right cluster and the old
+          horizontal-scroll link bar — a vertical list can never overflow
+          horizontally, unlike a row of 7 links ever could. */}
+      {mobileOpen && (
+        <div id="mobile-nav-panel" className="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-white/5 px-3 py-3 xl:hidden">
+          <nav className="flex flex-col gap-1" aria-label="Primary">
+            {SECTIONS.map((s) => (
+              <Link
+                key={s.href}
+                href={s.href}
+                className={`nav-link ${isActive(s.href) ? "nav-link-active" : ""}`}
+              >
+                {t(s.key)}
+              </Link>
+            ))}
+          </nav>
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-white/5 pt-3">
+            <LanguageSelector />
+            <AiSelector />
+          </div>
+          <WorkspaceLink className="btn-primary mt-3 w-full justify-center px-4 py-2.5 text-sm" />
+        </div>
+      )}
     </header>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+      <path d="M6 6l12 12M18 6L6 18" />
+    </svg>
   );
 }

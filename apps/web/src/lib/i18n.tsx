@@ -51,6 +51,8 @@ const en: Dict = {
     security: "Security",
     docs: "Docs",
     workspace: "Launch app",
+    menu: "Menu",
+    closeMenu: "Close menu",
   },
   network: {
     toggleLabel: "Network",
@@ -512,6 +514,8 @@ const es: Dict = {
     security: "Seguridad",
     docs: "Docs",
     workspace: "Abrir app",
+    menu: "Menú",
+    closeMenu: "Cerrar menú",
   },
   network: {
     toggleLabel: "Red",
@@ -973,6 +977,8 @@ const pt: Dict = {
     security: "Segurança",
     docs: "Docs",
     workspace: "Abrir app",
+    menu: "Menu",
+    closeMenu: "Fechar menu",
   },
   network: {
     toggleLabel: "Rede",
