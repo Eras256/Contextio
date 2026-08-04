@@ -163,6 +163,52 @@ export default function DocsPage() {
                 </p>
               </div>
 
+              {/* Self-custody prepare/submit pair — treasury */}
+              <div className="rounded-xl border border-white/5 bg-white/[0.01] p-5 space-y-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="rounded bg-brand/10 border border-brand/30 px-2 py-0.5 font-mono text-xs font-bold text-brand uppercase">POST</span>
+                  <span className="font-mono text-sm text-white break-all">/api/v1/treasury/prepare</span>
+                  <span className="rounded bg-brand/10 border border-brand/30 px-2 py-0.5 font-mono text-xs font-bold text-brand uppercase">POST</span>
+                  <span className="font-mono text-sm text-white break-all">/api/v1/treasury/submit</span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  Self-custody rebalance: <code className="font-mono text-slate-300">/prepare</code> returns an unsigned XDR built server-side for either venue (<code className="font-mono text-slate-300">venue: &quot;blend&quot; | &quot;defindex&quot;</code>); the tenant&apos;s own wallet (Freighter) signs it client-side; <code className="font-mono text-slate-300">/submit</code> broadcasts the already-signed envelope. The server never holds a key capable of moving these funds.
+                </p>
+              </div>
+
+              {/* Self-custody prepare/submit pair — payroll */}
+              <div className="rounded-xl border border-white/5 bg-white/[0.01] p-5 space-y-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="rounded bg-brand/10 border border-brand/30 px-2 py-0.5 font-mono text-xs font-bold text-brand uppercase">POST</span>
+                  <span className="font-mono text-sm text-white break-all">/api/v1/payroll/runs/prepare</span>
+                  <span className="rounded bg-brand/10 border border-brand/30 px-2 py-0.5 font-mono text-xs font-bold text-brand uppercase">POST</span>
+                  <span className="font-mono text-sm text-white break-all">/api/v1/payroll/runs/submit</span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  Same self-custody pattern for Payouts: unsigned payment XDR out, signed envelope in. Requires an explicit contractor attestation (LFT-safe framing — this settles a contractor invoice in USDC, not a salary payment) before <code className="font-mono text-slate-300">/prepare</code> will build the transaction.
+                </p>
+              </div>
+
+              {/* SEP-38/31 institutional rails */}
+              <div className="rounded-xl border border-white/5 bg-white/[0.01] p-5 space-y-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="rounded bg-sky-500/10 border border-sky-500/30 px-2 py-0.5 font-mono text-xs font-bold text-sky-400 uppercase">GET</span>
+                  <span className="font-mono text-sm text-white break-all">/api/v1/public/anchor/sep38</span>
+                  <span className="rounded bg-sky-500/10 border border-sky-500/30 px-2 py-0.5 font-mono text-xs font-bold text-sky-400 uppercase">GET</span>
+                  <span className="font-mono text-sm text-white break-all">/api/v1/public/anchor/sep31</span>
+                </div>
+                <p className="text-xs text-slate-400">Real, read-only discovery against the reference anchor&apos;s SEP-38 quote server (indicative FX prices) and SEP-31 direct-payment server (accepted institutional settlement assets) — the mechanism a licensed anchor would use to settle payroll cross-border. No funds move on either call.</p>
+              </div>
+
+              {/* Relayer */}
+              <div className="rounded-xl border border-white/5 bg-white/[0.01] p-5 space-y-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="rounded bg-sky-500/10 border border-sky-500/30 px-2 py-0.5 font-mono text-xs font-bold text-sky-400 uppercase">GET</span>
+                  <span className="font-mono text-sm text-white break-all">/api/v1/public/relayer</span>
+                </div>
+                <p className="text-xs text-slate-400">Reports whether OpenZeppelin Channels fee-sponsorship is configured. When enabled, self-custody Payouts submission is fee-sponsored by OpenZeppelin&apos;s own fund account — no platform key involved at any point, which is what makes it safe to run on mainnet under the no-hot-key boot guard.</p>
+              </div>
+
               {/* Endpoint block 5 */}
               <div className="rounded-xl border border-white/5 bg-white/[0.01] p-5 space-y-4">
                 <div className="flex flex-wrap items-center gap-3">
@@ -195,7 +241,7 @@ export default function DocsPage() {
                   <span>Initialize SDK Client & Fetch Treasury</span>
                   <button
                     onClick={() => copyToClipboard(
-                      `import { ContextioClient } from "contextio-sdk";\n\nconst client = new ContextioClient({\n  apiKey: "your_lcp_tenant_api_key",\n  baseUrl: "https://contextio-api.fly.dev"\n});\n\n// Get aggregate holdings on Blend and DeFindex\nconst positions = await client.getTreasuryPositions();\nconsole.log("Active DeFi Yield Positions:", positions);`,
+                      `import { ContextioClient } from "contextio-sdk";\n\n// 1. Unauthenticated handshake: prove control of the tenant's Stellar wallet\nconst anon = new ContextioClient({ baseUrl: "https://contextio-api.fly.dev" });\nconst { message, hmac } = await anon.challenge(walletAddress);\nconst { signedMessage } = await window.stellarWalletsKit.signMessage(message, { address: walletAddress });\nconst session = await anon.verify({ address: walletAddress, message, hmac, signedMessage });\n\n// 2. Authenticated client for tenant-scoped reads\nconst client = anon.withSession(session);\nconst snapshot = await client.treasury();\nconsole.log("Blend + DeFindex positions:", snapshot);`,
                       "sdk-init"
                     )}
                     className="text-brand hover:underline font-mono"
@@ -206,24 +252,26 @@ export default function DocsPage() {
                 <div className="rounded-xl border border-white/5 bg-ink-950 p-4 font-mono text-xs text-slate-300 overflow-x-auto">
                   <pre>{`import { ContextioClient } from "contextio-sdk";
 
-const client = new ContextioClient({
-  apiKey: "your_lcp_tenant_api_key",
-  baseUrl: "https://contextio-api.fly.dev"
-});
+// 1. Unauthenticated handshake: prove control of the tenant's Stellar wallet
+const anon = new ContextioClient({ baseUrl: "https://contextio-api.fly.dev" });
+const { message, hmac } = await anon.challenge(walletAddress);
+const { signedMessage } = await window.stellarWalletsKit.signMessage(message, { address: walletAddress });
+const session = await anon.verify({ address: walletAddress, message, hmac, signedMessage });
 
-// Get aggregate holdings on Blend and DeFindex
-const positions = await client.getTreasuryPositions();
-console.log("Active DeFi Yield Positions:", positions);`}</pre>
+// 2. Authenticated client for tenant-scoped reads
+const client = anon.withSession(session);
+const snapshot = await client.treasury();
+console.log("Blend + DeFindex positions:", snapshot);`}</pre>
                 </div>
               </div>
 
               {/* Code block 2 */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>Request Unsigned Rebalance XDR for Self-Custody</span>
+                  <span>Self-Custody Rebalance (unsigned XDR out, signed envelope in)</span>
                   <button
                     onClick={() => copyToClipboard(
-                      `// Request XDR preparation from API\nconst { xdr } = await client.prepareMove({\n  venue: "blend",\n  action: "deposit",\n  asset: "USDC",\n  amount: "500.0000000"\n});\n\n// Sign locally using Freighter\nconst signedXdr = await window.stellarWalletsKit.signTransaction(xdr);\n\n// Submit signed transaction back for settlement\nconst result = await client.submitMove({ signedXdr });\nconsole.log("Onchain Tx Hash:", result.txHash);`,
+                      `// prepare/submit aren't wrapped in the SDK yet — call the API directly,\n// reusing the same session from client.withSession() above.\nconst prep = await fetch("https://contextio-api.fly.dev/api/v1/treasury/prepare", {\n  method: "POST",\n  headers: { "content-type": "application/json", authorization: \`Bearer \${session.token}\`, "x-tenant-id": session.tenantId },\n  body: JSON.stringify({ venue: "blend", action: "deposit", asset: "USDC", amount: "500.0000000" }),\n}).then((r) => r.json());\n\n// Sign the unsigned XDR locally with the tenant's own wallet\nconst signedXdr = await window.stellarWalletsKit.signTransaction(prep.xdr);\n\nconst result = await fetch("https://contextio-api.fly.dev/api/v1/treasury/submit", {\n  method: "POST",\n  headers: { "content-type": "application/json", authorization: \`Bearer \${session.token}\`, "x-tenant-id": session.tenantId },\n  body: JSON.stringify({ signedXdr }),\n}).then((r) => r.json());\nconsole.log("Onchain tx hash:", result.txHash);`,
                       "sdk-rebalance"
                     )}
                     className="text-brand hover:underline font-mono"
@@ -232,20 +280,23 @@ console.log("Active DeFi Yield Positions:", positions);`}</pre>
                   </button>
                 </div>
                 <div className="rounded-xl border border-white/5 bg-ink-950 p-4 font-mono text-xs text-slate-300 overflow-x-auto">
-                  <pre>{`// Request XDR preparation from API
-const { xdr } = await client.prepareMove({
-  venue: "blend",
-  action: "deposit",
-  asset: "USDC",
-  amount: "500.0000000"
-});
+                  <pre>{`// prepare/submit aren't wrapped in the SDK yet — call the API directly,
+// reusing the same session from client.withSession() above.
+const prep = await fetch("https://contextio-api.fly.dev/api/v1/treasury/prepare", {
+  method: "POST",
+  headers: { "content-type": "application/json", authorization: \`Bearer \${session.token}\`, "x-tenant-id": session.tenantId },
+  body: JSON.stringify({ venue: "blend", action: "deposit", asset: "USDC", amount: "500.0000000" }),
+}).then((r) => r.json());
 
-// Sign locally using Freighter
-const signedXdr = await window.stellarWalletsKit.signTransaction(xdr);
+// Sign the unsigned XDR locally with the tenant's own wallet
+const signedXdr = await window.stellarWalletsKit.signTransaction(prep.xdr);
 
-// Submit signed transaction back for settlement
-const result = await client.submitMove({ signedXdr });
-console.log("Onchain Tx Hash:", result.txHash);`}</pre>
+const result = await fetch("https://contextio-api.fly.dev/api/v1/treasury/submit", {
+  method: "POST",
+  headers: { "content-type": "application/json", authorization: \`Bearer \${session.token}\`, "x-tenant-id": session.tenantId },
+  body: JSON.stringify({ signedXdr }),
+}).then((r) => r.json());
+console.log("Onchain tx hash:", result.txHash);`}</pre>
                 </div>
               </div>
             </div>

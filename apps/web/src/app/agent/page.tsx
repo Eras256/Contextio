@@ -8,6 +8,7 @@ import { getAiConfig } from "@/lib/aiModel";
 import { useLiveData } from "@/lib/useLiveData";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
+import { useNetwork } from "@/lib/network";
 
 interface LegalDoc {
   tenantDomain?: string;
@@ -18,6 +19,7 @@ interface LegalDoc {
 
 export default function AgentPage() {
   const { t, locale } = useI18n();
+  const network = useNetwork();
   const { accessToken, tenantId, connect, connecting } = useAuth();
   const decisions = useLiveData<Decision[]>(api.decisions, [], { realtimeTable: "agent_decisions" });
   const legal = useLiveData<LegalState>(api.legal, { published: false });
@@ -125,7 +127,7 @@ export default function AgentPage() {
               legal.data.hash ? (
                 <a
                   className="font-mono text-xs text-accent hover:underline hover:text-accent/80 transition inline-flex items-center gap-1"
-                  href={`${apiBaseUrl}/.well-known/legal-context.json?domain=${doc.tenantDomain ?? "contextio.xyz"}`}
+                  href={`${apiBaseUrl()}/.well-known/legal-context.json?domain=${doc.tenantDomain ?? "contextio.xyz"}`}
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -140,7 +142,7 @@ export default function AgentPage() {
             <div className="mt-4">
               <a
                 className="btn-ghost"
-                href={`${apiBaseUrl}/.well-known/legal-context.json?domain=${doc.tenantDomain}`}
+                href={`${apiBaseUrl()}/.well-known/legal-context.json?domain=${doc.tenantDomain}`}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -200,7 +202,7 @@ export default function AgentPage() {
                   {d.legalContextHash ? (
                     <a
                       className="font-mono text-accent hover:underline hover:text-accent/80 transition inline-flex items-center gap-1"
-                      href={`${apiBaseUrl}/.well-known/legal-context.json?domain=${doc.tenantDomain ?? "contextio.xyz"}`}
+                      href={`${apiBaseUrl()}/.well-known/legal-context.json?domain=${doc.tenantDomain ?? "contextio.xyz"}`}
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -215,7 +217,7 @@ export default function AgentPage() {
                   {d.stellarTxHash && !d.stellarTxHash.startsWith("sim:") ? (
                     <a
                       className="font-mono text-brand hover:underline"
-                      href={`https://stellar.expert/explorer/testnet/tx/${d.stellarTxHash}`}
+                      href={`https://stellar.expert/explorer/${network === "mainnet" ? "public" : "testnet"}/tx/${d.stellarTxHash}`}
                       target="_blank"
                       rel="noreferrer"
                     >

@@ -6,6 +6,7 @@ import { api, type ApiAuth, type TreasurySnapshot } from "@/lib/api";
 import { signWalletMessage, signWalletTransaction } from "@/lib/wallet";
 import { getVaults, addVault, removeVault, type DeployedVault } from "@/lib/vaults";
 import { useT } from "@/lib/i18n";
+import { useNetwork } from "@/lib/network";
 
 /**
  * Manual treasury controls for the dashboard — everything the autonomous agent
@@ -128,13 +129,13 @@ const toBase = (usd: string) => {
   return BigInt(Math.round(n * 1e7)).toString();
 };
 
-const NETWORK = (process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "testnet").toLowerCase();
-const txUrl = (hash: string) =>
-  `https://stellar.expert/explorer/${NETWORK === "mainnet" ? "public" : "testnet"}/tx/${hash}`;
+const txUrl = (hash: string, network: string) =>
+  `https://stellar.expert/explorer/${network === "mainnet" ? "public" : "testnet"}/tx/${hash}`;
 
 function TxLink({ hash }: { hash: string }) {
+  const network = useNetwork();
   return (
-    <a href={txUrl(hash)} target="_blank" rel="noreferrer" className="font-mono text-brand hover:underline">
+    <a href={txUrl(hash, network)} target="_blank" rel="noreferrer" className="font-mono text-brand hover:underline">
       tx {hash.slice(0, 8)}…{hash.slice(-6)} ↗
     </a>
   );
@@ -151,8 +152,8 @@ function friendlyError(m: string): string {
   return m.length > 180 ? `${m.slice(0, 180)}…` : m;
 }
 
-const contractUrl = (a: string) =>
-  `https://stellar.expert/explorer/${NETWORK === "mainnet" ? "public" : "testnet"}/contract/${a}`;
+const contractUrl = (a: string, network: string) =>
+  `https://stellar.expert/explorer/${network === "mainnet" ? "public" : "testnet"}/contract/${a}`;
 
 /** The vaults the user has deployed (real on-chain), tracked client-side. */
 function DeployedVaults({
@@ -162,6 +163,7 @@ function DeployedVaults({
   vaults: DeployedVault[];
   onRemove: (v: DeployedVault) => void;
 }) {
+  const network = useNetwork();
   if (vaults.length === 0) return null;
   return (
     <div className="mt-5">
@@ -190,7 +192,7 @@ function DeployedVaults({
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/5 pt-2 text-[11px]">
               {v.address && (
-                <a href={contractUrl(v.address)} target="_blank" rel="noreferrer" className="font-mono text-accent hover:underline">
+                <a href={contractUrl(v.address, network)} target="_blank" rel="noreferrer" className="font-mono text-accent hover:underline">
                   vault {v.address.slice(0, 6)}…{v.address.slice(-4)} ↗
                 </a>
               )}
@@ -205,6 +207,7 @@ function DeployedVaults({
 
 function RebalancePanel({ auth, address }: { auth: ApiAuth; address: string | null }) {
   const t = useT();
+  const network = useNetwork();
   const [amount, setAmount] = useState("1");
   const [venue, setVenue] = useState<"blend" | "defindex">("blend");
   const [asset, setAsset] = useState<"XLM" | "USDC">("XLM");
@@ -288,7 +291,7 @@ function RebalancePanel({ auth, address }: { auth: ApiAuth; address: string | nu
         <label className="mt-2 block text-[11px] text-slate-400">
           Asset
           <select value={asset} onChange={(e) => setAsset(e.target.value as typeof asset)} className={selectCls}>
-            <option value="XLM">XLM — works with your testnet balance</option>
+            <option value="XLM">XLM — works with your {network} balance</option>
             <option value="USDC">USDC — needs trustline + balance</option>
           </select>
         </label>
@@ -424,6 +427,7 @@ function CreateVaultPanel({
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [tx, setTx] = useState<string | null>(null);
+  const network = useNetwork();
   const selectCls =
     "rounded-lg border border-white/15 bg-ink-900 px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand";
 
@@ -474,7 +478,7 @@ function CreateVaultPanel({
           />
           <select value={asset} onChange={(e) => setAsset(e.target.value as "XLM" | "USDC")} className={selectCls}>
             <option value="XLM">XLM · Blend strategy</option>
-            <option value="USDC">USDC (no testnet strategy)</option>
+            <option value="USDC">USDC (no {network} strategy yet)</option>
           </select>
           <button onClick={() => void create()} disabled={busy} className="btn-primary justify-center px-3 py-2 text-xs disabled:opacity-40 sm:col-span-2">
             {busy ? "…" : "Create vault"}

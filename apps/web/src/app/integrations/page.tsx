@@ -4,10 +4,16 @@ import { useEffect, useState } from "react";
 import { Badge, Card, SectionHeader } from "@/components/ui";
 import { bps } from "@/lib/format";
 import { useT } from "@/lib/i18n";
+import { resolveApiUrl, useNetwork } from "@/lib/network";
 
 type Status = "live" | "mock" | "ready" | "prod";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+/** Loading → the fetch hasn't resolved yet. Off → the API answered but said
+ *  `live:false` (not configured / not offered on this network) — distinct
+ *  from "still connecting" so the badge never lies by omission. */
+type Fetched<T> = { s: "loading" } | { s: "off"; reason?: string } | { s: "live"; v: T };
+
+const API = resolveApiUrl();
 
 interface LiveVault {
   vaultId: string;
@@ -40,11 +46,27 @@ interface AnchorInfo {
   transferServer: string | null;
 }
 
+interface Sep38Info {
+  sellAsset: string;
+  prices: { buy_assets?: { asset: string; price: string; decimals: number }[] };
+}
+
+interface Sep31Info {
+  info: { receive?: Record<string, unknown> };
+}
+
+const SMART_ACCOUNT_ID = "CAOCNQZF2HPSB6EVQC7XAU3NOPKJZB5L2LZ5C75QX4J3WBRCAC67UBAK";
+const SPENDING_LIMIT_POLICY_ID = "CAVHNHPHFUSM4I24SDNORFXW45GEFFB46ZFQNCTFMO44ICHCOBMET3SV";
+
 export default function IntegrationsPage() {
   const t = useT();
-  const [vault, setVault] = useState<LiveVault | null>(null);
-  const [blend, setBlend] = useState<BlendVault | null>(null);
-  const [anchor, setAnchor] = useState<AnchorInfo | null>(null);
+  const network = useNetwork();
+  const [vault, setVault] = useState<Fetched<LiveVault>>({ s: "loading" });
+  const [blend, setBlend] = useState<Fetched<BlendVault>>({ s: "loading" });
+  const [anchor, setAnchor] = useState<Fetched<AnchorInfo>>({ s: "loading" });
+  const [sep38, setSep38] = useState<Fetched<Sep38Info>>({ s: "loading" });
+  const [sep31, setSep31] = useState<Fetched<Sep31Info>>({ s: "loading" });
+  const [relayer, setRelayer] = useState<Fetched<{ provider: string }>>({ s: "loading" });
   const [offramp, setOfframp] = useState<{ loading: boolean; error: string | null }>({ loading: false, error: null });
   const [health, setHealth] = useState<{ api: boolean; supabase: boolean; stellar: boolean; agent: boolean } | null>(null);
   const [oracle, setOracle] = useState<{ live: boolean; source: string; network: string; xlm: number | null } | null>(null);
@@ -68,21 +90,32 @@ export default function IntegrationsPage() {
         agent: agentLive,
       });
     });
-    const grab = (path: string, set: (v: unknown) => void) =>
+    // Generic tri-state fetch: distinguishes "still loading" from an explicit
+    // `live:false` from the API (not configured on this network) — the badge
+    // must never keep showing "Ready" forever when the answer was really "no".
+    function grab<T>(path: string, extract: (j: Record<string, unknown>) => T | null, set: (v: Fetched<T>) => void) {
       fetch(`${API}/api/v1/public/${path}`, { cache: "no-store" })
         .then((r) => (r.ok ? r.json() : null))
-        .then((j) => {
-          if (alive && j?.live && j.vault) set(j.vault);
+        .then((j: Record<string, unknown> | null) => {
+          if (!alive) return;
+          if (!j || !j.live) {
+            set({ s: "off", reason: typeof j?.reason === "string" ? j.reason : undefined });
+            return;
+          }
+          const v = extract(j);
+          if (v) set({ s: "live", v });
+          else set({ s: "off" });
         })
-        .catch(() => {});
-    void grab("defindex", (v) => setVault(v as LiveVault));
-    void grab("blend", (v) => setBlend(v as BlendVault));
-    fetch(`${API}/api/v1/public/anchor`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => {
-        if (alive && j?.live) setAnchor(j as AnchorInfo);
-      })
-      .catch(() => {});
+        .catch(() => {
+          if (alive) set({ s: "off" });
+        });
+    }
+    grab("defindex", (j) => (j.vault as LiveVault) ?? null, setVault);
+    grab("blend", (j) => (j.vault as BlendVault) ?? null, setBlend);
+    grab("anchor", (j) => j as unknown as AnchorInfo, setAnchor);
+    grab("anchor/sep38", (j) => ({ sellAsset: j.sellAsset as string, prices: j.prices as Sep38Info["prices"] }), setSep38);
+    grab("anchor/sep31", (j) => ({ info: j.info as Sep31Info["info"] }), setSep31);
+    grab("relayer", (j) => ({ provider: j.provider as string }), setRelayer);
     fetch(`${API}/api/v1/public/oracle`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
@@ -93,6 +126,16 @@ export default function IntegrationsPage() {
       alive = false;
     };
   }, []);
+
+  // Combined status for the SEP-31/38 card: "live" if either protocol answered,
+  // "loading" while both are still in flight, "off" (with whichever reason is
+  // available) only once both have definitively answered no.
+  const sep3138: Fetched<null> =
+    sep38.s === "live" || sep31.s === "live"
+      ? { s: "live", v: null }
+      : sep38.s === "loading" || sep31.s === "loading"
+        ? { s: "loading" }
+        : { s: "off", reason: (sep38.s === "off" && sep38.reason) || (sep31.s === "off" && sep31.reason) || undefined };
 
   const explorer = (id: string, net: string) =>
     `https://stellar.expert/explorer/${net === "mainnet" ? "public" : "testnet"}/contract/${id}`;
@@ -132,22 +175,20 @@ export default function IntegrationsPage() {
           <Card className="flex flex-col sm:col-span-2 lg:col-span-1">
             <div className="flex items-start justify-between gap-2">
               <span className="font-medium text-white">{t("pages.integrations.defindexName")}</span>
-              <Badge tone={vault ? "success" : "warn"}>
-                {t(vault ? "pages.integrations.statusLive" : "pages.integrations.statusReady")}
-              </Badge>
+              <FetchedBadge t={t} f={vault} />
             </div>
             <p className="mt-2 text-xs leading-relaxed text-slate-400">
               {t("pages.integrations.defindexBody")}
             </p>
-            {vault ? (
+            {vault.s === "live" ? (
               <div className="mt-3 space-y-1.5 border-t border-white/5 pt-3 text-xs">
-                <Row k={t("pages.integrations.dfxApy")} v={<span className="font-semibold text-brand">{bps(vault.apyBps)}</span>} />
-                <Row k={t("pages.integrations.dfxTvl")} v={<span className="font-mono text-slate-300">{xlm(vault.tvlBaseUnits)} {vault.asset}</span>} />
-                <Row k={t("pages.integrations.dfxPosition")} v={<span className="font-mono text-slate-300">{xlm(vault.positionBaseUnits)} {vault.asset}</span>} />
-                <Row k="Strategy" v={<span className="text-slate-300">{vault.strategy}</span>} />
+                <Row k={t("pages.integrations.dfxApy")} v={<span className="font-semibold text-brand">{bps(vault.v.apyBps)}</span>} />
+                <Row k={t("pages.integrations.dfxTvl")} v={<span className="font-mono text-slate-300">{xlm(vault.v.tvlBaseUnits)} {vault.v.asset}</span>} />
+                <Row k={t("pages.integrations.dfxPosition")} v={<span className="font-mono text-slate-300">{xlm(vault.v.positionBaseUnits)} {vault.v.asset}</span>} />
+                <Row k="Strategy" v={<span className="text-slate-300">{vault.v.strategy}</span>} />
                 <a
                   className="mt-2 inline-flex font-mono text-accent hover:underline"
-                  href={explorer(vault.vaultId, vault.network)}
+                  href={explorer(vault.v.vaultId, vault.v.network)}
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -155,7 +196,7 @@ export default function IntegrationsPage() {
                 </a>
               </div>
             ) : (
-              <div className="mt-3 border-t border-white/5 pt-3 text-xs text-slate-500">{t("auth.connecting")}</div>
+              <FetchedFooter t={t} f={vault} />
             )}
           </Card>
 
@@ -163,19 +204,17 @@ export default function IntegrationsPage() {
           <Card className="flex flex-col">
             <div className="flex items-start justify-between gap-2">
               <span className="font-medium text-white">{t("pages.integrations.blendName")}</span>
-              <Badge tone={blend ? "success" : "warn"}>
-                {t(blend ? "pages.integrations.statusLive" : "pages.integrations.statusReady")}
-              </Badge>
+              <FetchedBadge t={t} f={blend} />
             </div>
             <p className="mt-2 text-xs leading-relaxed text-slate-400">{t("pages.integrations.blendBody")}</p>
-            {blend ? (
+            {blend.s === "live" ? (
               <div className="mt-3 space-y-1.5 border-t border-white/5 pt-3 text-xs">
-                <Row k={t("pages.integrations.dfxApy")} v={<span className="font-semibold text-brand">{bps(blend.supplyApyBps)}</span>} />
-                <Row k={t("pages.integrations.dfxTvl")} v={<span className="font-mono text-slate-300">{xlm(blend.tvlBaseUnits)} {blend.asset}</span>} />
-                <Row k={t("pages.integrations.dfxPosition")} v={<span className="font-mono text-slate-300">{xlm(blend.positionBaseUnits)} {blend.asset}</span>} />
+                <Row k={t("pages.integrations.dfxApy")} v={<span className="font-semibold text-brand">{bps(blend.v.supplyApyBps)}</span>} />
+                <Row k={t("pages.integrations.dfxTvl")} v={<span className="font-mono text-slate-300">{xlm(blend.v.tvlBaseUnits)} {blend.v.asset}</span>} />
+                <Row k={t("pages.integrations.dfxPosition")} v={<span className="font-mono text-slate-300">{xlm(blend.v.positionBaseUnits)} {blend.v.asset}</span>} />
                 <a
                   className="mt-2 inline-flex font-mono text-accent hover:underline"
-                  href={explorer(blend.poolId, blend.network)}
+                  href={explorer(blend.v.poolId, blend.v.network)}
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -183,7 +222,7 @@ export default function IntegrationsPage() {
                 </a>
               </div>
             ) : (
-              <div className="mt-3 border-t border-white/5 pt-3 text-xs text-slate-500">{t("auth.connecting")}</div>
+              <FetchedFooter t={t} f={blend} />
             )}
           </Card>
 
@@ -223,17 +262,17 @@ export default function IntegrationsPage() {
         <Card className="flex flex-col">
           <div className="flex items-start justify-between gap-2">
             <span className="font-medium text-white">{t("pages.integrations.anchorName")}</span>
-            <Badge tone={anchor ? "success" : "warn"}>
-              {t(anchor ? "pages.integrations.statusLive" : "pages.integrations.statusReady")}
-            </Badge>
+            <FetchedBadge t={t} f={anchor} />
           </div>
           <p className="mt-2 text-xs leading-relaxed text-slate-400">{t("pages.integrations.anchorBody")}</p>
-          {anchor && (
+          {anchor.s === "live" ? (
             <div className="mt-3 space-y-1.5 border-t border-white/5 pt-3 text-xs">
-              <Row k="Anchor" v={<span className="font-mono text-slate-300">{anchor.anchor}</span>} />
-              <Row k="Off-ramp" v={<span className="font-mono text-slate-300">{anchor.withdraw.join(" · ")}</span>} />
-              <Row k="Protocols" v={<span className="font-mono text-slate-300">{anchor.protocols.join(" · ")}</span>} />
+              <Row k="Anchor" v={<span className="font-mono text-slate-300">{anchor.v.anchor}</span>} />
+              <Row k="Off-ramp" v={<span className="font-mono text-slate-300">{anchor.v.withdraw.join(" · ")}</span>} />
+              <Row k="Protocols" v={<span className="font-mono text-slate-300">{anchor.v.protocols.join(" · ")}</span>} />
             </div>
+          ) : (
+            <FetchedFooter t={t} f={anchor} />
           )}
           <button
             onClick={() => void startOfframp()}
@@ -245,6 +284,39 @@ export default function IntegrationsPage() {
           {offramp.error && <p className="mt-2 break-words text-[11px] text-red-400">{offramp.error}</p>}
         </Card>
 
+        {/* Real SEP-31/38 institutional settlement discovery */}
+        <Card className="flex flex-col">
+          <div className="flex items-start justify-between gap-2">
+            <span className="font-medium text-white">{t("pages.integrations.sep3138Name")}</span>
+            <FetchedBadge t={t} f={sep3138} />
+          </div>
+          <p className="mt-2 text-xs leading-relaxed text-slate-400">{t("pages.integrations.sep3138Body")}</p>
+          {sep38.s === "live" || sep31.s === "live" ? (
+            <div className="mt-3 space-y-1.5 border-t border-white/5 pt-3 text-xs">
+              {sep38.s === "live" &&
+                (sep38.v.prices.buy_assets ?? []).map((p) => (
+                  <Row
+                    key={p.asset}
+                    k={`${sep38.v.sellAsset.replace("stellar:", "")} → ${p.asset.replace("iso4217:", "")}`}
+                    v={<span className="font-mono font-semibold text-brand">{Number(p.price).toFixed(4)}</span>}
+                  />
+                ))}
+              {sep31.s === "live" && (
+                <Row
+                  k={t("pages.integrations.sep31AssetsLabel")}
+                  v={
+                    <span className="font-mono text-slate-300">
+                      {Object.keys(sep31.v.info.receive ?? {}).join(" · ") || t("pages.integrations.sep31Empty")}
+                    </span>
+                  }
+                />
+              )}
+            </div>
+          ) : (
+            <FetchedFooter t={t} f={sep3138} />
+          )}
+        </Card>
+
         <div className="grid gap-4 sm:grid-cols-3">
           <IntegrationCard t={t} name={t("pages.integrations.pixName")} body={t("pages.integrations.pixBody")} status="prod" />
           <IntegrationCard t={t} name={t("pages.integrations.transfersName")} body={t("pages.integrations.transfersBody")} status="prod" />
@@ -252,14 +324,67 @@ export default function IntegrationsPage() {
         </div>
       </section>
 
+      {/* Security & custody — how the agent operates without a hot key */}
+      <section className="space-y-4">
+        <Header title={t("pages.integrations.custodyTitle")} body={t("pages.integrations.custodyBody")} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          {network === "testnet" && (
+            <Card className="flex flex-col">
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-medium text-white">{t("pages.integrations.smartAccountName")}</span>
+                <Badge tone="success">{t("pages.integrations.statusLive")}</Badge>
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">{t("pages.integrations.smartAccountBody")}</p>
+              <div className="mt-3 space-y-1.5 border-t border-white/5 pt-3 text-xs">
+                <Row
+                  k={t("pages.integrations.smartAccountSigner")}
+                  v={
+                    <a className="font-mono text-accent hover:underline" href={explorer(SMART_ACCOUNT_ID, "testnet")} target="_blank" rel="noreferrer">
+                      {SMART_ACCOUNT_ID.slice(0, 8)}…{SMART_ACCOUNT_ID.slice(-4)} ↗
+                    </a>
+                  }
+                />
+                <Row
+                  k={t("pages.integrations.smartAccountPolicy")}
+                  v={
+                    <a className="font-mono text-accent hover:underline" href={explorer(SPENDING_LIMIT_POLICY_ID, "testnet")} target="_blank" rel="noreferrer">
+                      {SPENDING_LIMIT_POLICY_ID.slice(0, 8)}…{SPENDING_LIMIT_POLICY_ID.slice(-4)} ↗
+                    </a>
+                  }
+                />
+                <Row k={t("pages.integrations.smartAccountCap")} v={<span className="font-mono font-semibold text-brand">100 USDC / day</span>} />
+              </div>
+            </Card>
+          )}
+
+          {/* Real OpenZeppelin Channels fee-sponsorship status */}
+          <Card className="flex flex-col">
+            <div className="flex items-start justify-between gap-2">
+              <span className="font-medium text-white">{t("pages.integrations.relayerName")}</span>
+              <Badge tone={relayer.s === "live" ? "success" : "info"}>
+                {relayer.s === "live" ? t("pages.integrations.statusLive") : t("pages.integrations.statusNotConfigured")}
+              </Badge>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-slate-400">{t("pages.integrations.relayerBody")}</p>
+          </Card>
+        </div>
+      </section>
+
       {/* Under the hood — these are genuinely live */}
       <section className="space-y-4">
         <Header title={t("pages.integrations.infraTitle")} body={t("pages.integrations.infraBody")} />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <HealthTile name="Stellar · Soroban" detail="testnet" live={health ? health.stellar : null} t={t} />
+          <HealthTile name="Stellar · Soroban" detail={network} live={health ? health.stellar : null} t={t} />
           <HealthTile name="Supabase" detail="Postgres · Auth · Realtime" live={health ? health.supabase : null} t={t} />
-          <HealthTile name="Fly.io · API" detail="gru · contextio-api" live={health ? health.api : null} t={t} />
-          <HealthTile name="Fly.io · Agent" detail="gru · contextio-agent" live={health ? health.agent : null} t={t} />
+          <HealthTile
+            name="Fly.io · API"
+            detail={network === "mainnet" ? "gru · contextio-api-mainnet" : "gru · contextio-api"}
+            live={health ? health.api : null}
+            t={t}
+          />
+          {network === "testnet" && (
+            <HealthTile name="Fly.io · Agent" detail="gru · contextio-agent" live={health ? health.agent : null} t={t} />
+          )}
         </div>
       </section>
 
@@ -284,6 +409,24 @@ function Row({ k, v }: { k: string; v: React.ReactNode }) {
     <div className="flex flex-wrap items-center justify-between gap-2">
       <span className="text-slate-500">{k}</span>
       <div className="text-right">{v}</div>
+    </div>
+  );
+}
+
+/** Badge for a `Fetched<T>` value: loading = info dot, live = success,
+ *  off = warn — never stuck showing "Ready" once the API has actually said no. */
+function FetchedBadge({ t, f }: { t: (k: string) => string; f: { s: "loading" | "off" | "live" } }) {
+  if (f.s === "live") return <Badge tone="success">{t("pages.integrations.statusLive")}</Badge>;
+  if (f.s === "off") return <Badge tone="warn">{t("pages.integrations.statusUnavailable")}</Badge>;
+  return <Badge tone="info">{t("auth.connecting")}</Badge>;
+}
+
+/** Footer text under a not-yet-live card: shows the API's own reason on mainnet
+ *  gates, otherwise a generic connecting/unavailable message. */
+function FetchedFooter({ t, f }: { t: (k: string) => string; f: { s: "loading" | "off" | "live"; reason?: string } }) {
+  return (
+    <div className="mt-3 border-t border-white/5 pt-3 text-xs text-slate-500">
+      {f.s === "loading" ? t("auth.connecting") : f.reason ?? t("pages.integrations.statusUnavailable")}
     </div>
   );
 }

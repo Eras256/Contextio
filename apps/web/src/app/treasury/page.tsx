@@ -7,6 +7,7 @@ import { TreasuryControls } from "@/components/TreasuryControls";
 import { useLiveData } from "@/lib/useLiveData";
 import { useT } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
+import { useNetwork } from "@/lib/network";
 
 const EMPTY: TreasurySnapshot = {
   config: null,
@@ -22,6 +23,7 @@ const PLACE_KEY: Record<string, string> = {
 
 export default function TreasuryPage() {
   const tr = useT();
+  const network = useNetwork();
   const { accessToken, tenantId, address, connect, connecting } = useAuth();
   const { data: snap, live, loading } = useLiveData(api.treasury, EMPTY, {
     realtimeTable: "treasury_positions",
@@ -159,7 +161,7 @@ export default function TreasuryPage() {
                 <p className="mt-2 text-sm text-slate-300">{d.rationale}</p>
                 {d.stellarTxHash && !d.stellarTxHash.startsWith("sim:") ? (
                   <a
-                    href={`https://stellar.expert/explorer/testnet/tx/${d.stellarTxHash}`}
+                    href={`https://stellar.expert/explorer/${network === "mainnet" ? "public" : "testnet"}/tx/${d.stellarTxHash}`}
                     target="_blank"
                     rel="noreferrer"
                     className="mt-1 inline-block font-mono text-xs text-brand hover:underline"
