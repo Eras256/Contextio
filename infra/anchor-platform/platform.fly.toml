@@ -1,0 +1,248 @@
+# Fly.io config for Contextio's self-hosted Anchor Platform (`platform`
+# process — bundles sep-server, platform-server, event-processor, and the
+# stellar-observer, matching stellar/anchor-platform's own quick-run
+# docker-compose.yaml `command:` line). Pulls SDF's published image directly
+# — no custom Dockerfile needed, config is entirely env-var driven.
+#
+# Deploy (from the monorepo root):
+#   fly deploy --config infra/anchor-platform/platform.fly.toml -a contextio-anchor-platform
+#
+# Secrets (never in [env], see fly secrets set):
+#   SECRET_SEP10_SIGNING_SEED, SECRET_SEP10_JWT_SECRET,
+#   SECRET_CALLBACK_API_AUTH_SECRET, SECRET_PLATFORM_API_AUTH_SECRET,
+#   SECRET_DATA_USERNAME, SECRET_DATA_PASSWORD
+
+app = "contextio-anchor-platform"
+# Same capacity reasoning as apps/anchor-business/fly.toml — iad has
+# verified headroom on this account, gru was hitting real-time contention.
+primary_region = "iad"
+
+[build]
+  image = "docker.io/stellar/anchor-platform:latest"
+
+[experimental]
+  cmd = ["--sep-server", "--platform-server", "--event-processor", "--stellar-observer"]
+
+[env]
+  STELLAR_NETWORK_NETWORK = "TESTNET"
+  STELLAR_NETWORK_TYPE = "rpc"
+  STELLAR_NETWORK_RPC_URL = "https://soroban-testnet.stellar.org"
+  STELLAR_NETWORK_HORIZON_URL = "https://horizon-testnet.stellar.org"
+
+  # Our own business/callback server (apps/anchor-business) — replaces
+  # SDF's kotlin-reference-server entirely.
+  CALLBACK_API_BASE_URL = "https://contextio-anchor-business.fly.dev/"
+  CALLBACK_API_AUTH_TYPE = "api_key"
+
+  PLATFORM_API_AUTH_TYPE = "api_key"
+
+  EVENTS_ENABLED = "true"
+  EVENTS_QUEUE_TYPE = "kafka"
+  EVENTS_QUEUE_KAFKA_BOOTSTRAP_SERVER = "contextio-anchor-kafka.internal:29092"
+
+  ASSETS_TYPE = "yaml"
+  ASSETS_VALUE = """
+items:
+  - id: stellar:native
+    distribution_account: GB7U6HCA7YYQICFOCAANVHD5LYM4UWQM67SZXTC4JKFMYOQ2IBGB5EH6
+    significant_decimals: 7
+    sep31:
+      enabled: true
+      receive:
+        min_amount: 0
+        max_amount: 100000
+        methods:
+          - PIX
+          - TRANSFERENCIAS_3
+          - BRE_B
+    sep38:
+      enabled: true
+      exchangeable_assets:
+        - iso4217:USD
+        - iso4217:BRL
+        - iso4217:ARS
+        - iso4217:COP
+  - id: iso4217:USD
+    significant_decimals: 4
+    sep31:
+      enabled: false
+    sep38:
+      enabled: true
+      exchangeable_assets:
+        - stellar:native
+      country_codes:
+        - US
+      sell_delivery_methods:
+        - name: WIRE
+          description: Send USD directly to the anchor's account.
+      buy_delivery_methods:
+        - name: WIRE
+          description: Have USD sent directly to your account.
+  - id: iso4217:BRL
+    significant_decimals: 2
+    sep31:
+      enabled: true
+      receive:
+        min_amount: 0
+        max_amount: 500000
+        methods:
+          - PIX
+    sep38:
+      enabled: true
+      exchangeable_assets:
+        - stellar:native
+      country_codes:
+        - BR
+      sell_delivery_methods:
+        - name: PIX
+          description: Send BRL via PIX directly to the anchor.
+      buy_delivery_methods:
+        - name: PIX
+          description: Receive BRL instantly via PIX.
+  - id: iso4217:ARS
+    significant_decimals: 2
+    sep31:
+      enabled: true
+      receive:
+        min_amount: 0
+        max_amount: 50000000
+        methods:
+          - TRANSFERENCIAS_3
+    sep38:
+      enabled: true
+      exchangeable_assets:
+        - stellar:native
+      country_codes:
+        - AR
+      sell_delivery_methods:
+        - name: TRANSFERENCIAS_3
+          description: Send ARS via Transferencias 3.0.
+      buy_delivery_methods:
+        - name: TRANSFERENCIAS_3
+          description: Receive ARS via Transferencias 3.0.
+  - id: iso4217:COP
+    significant_decimals: 2
+    sep31:
+      enabled: true
+      receive:
+        min_amount: 0
+        max_amount: 200000000
+        methods:
+          - BRE_B
+    sep38:
+      enabled: true
+      exchangeable_assets:
+        - stellar:native
+      country_codes:
+        - CO
+      sell_delivery_methods:
+        - name: BRE_B
+          description: Send COP via Bre-B.
+      buy_delivery_methods:
+        - name: BRE_B
+          description: Receive COP via Bre-B.
+"""
+
+  SEP1_ENABLED = "true"
+  SEP1_TOML_TYPE = "string"
+  SEP1_TOML_VALUE = """
+ACCOUNTS = [\"GB7U6HCA7YYQICFOCAANVHD5LYM4UWQM67SZXTC4JKFMYOQ2IBGB5EH6\"]
+VERSION = \"1.0.0\"
+SIGNING_KEY = \"GB7U6HCA7YYQICFOCAANVHD5LYM4UWQM67SZXTC4JKFMYOQ2IBGB5EH6\"
+NETWORK_PASSPHRASE = \"Test SDF Network ; September 2015\"
+
+WEB_AUTH_ENDPOINT = \"https://contextio-anchor-platform.fly.dev/auth\"
+KYC_SERVER = \"https://contextio-anchor-platform.fly.dev/sep12\"
+DIRECT_PAYMENT_SERVER = \"https://contextio-anchor-platform.fly.dev/sep31\"
+ANCHOR_QUOTE_SERVER = \"https://contextio-anchor-platform.fly.dev/sep38\"
+
+[[CURRENCIES]]
+code = \"native\"
+status = \"test\"
+is_asset_anchored = false
+anchor_asset_type = \"crypto\"
+desc = \"XLM, the native token of the Stellar network.\"
+
+[[CURRENCIES]]
+code = \"USD\"
+status = \"test\"
+is_asset_anchored = true
+anchor_asset_type = \"fiat\"
+desc = \"US Dollar, settled via wire -- testnet demo corridor.\"
+
+[[CURRENCIES]]
+code = \"BRL\"
+status = \"test\"
+is_asset_anchored = true
+anchor_asset_type = \"fiat\"
+desc = \"Brazilian Real, settled via PIX -- testnet demo corridor.\"
+
+[[CURRENCIES]]
+code = \"ARS\"
+status = \"test\"
+is_asset_anchored = true
+anchor_asset_type = \"fiat\"
+desc = \"Argentine Peso, settled via Transferencias 3.0 -- testnet demo corridor.\"
+
+[[CURRENCIES]]
+code = \"COP\"
+status = \"test\"
+is_asset_anchored = true
+anchor_asset_type = \"fiat\"
+desc = \"Colombian Peso, settled via Bre-B -- testnet demo corridor.\"
+
+[DOCUMENTATION]
+ORG_NAME = \"Contextio\"
+ORG_URL = \"https://www.contextio.xyz\"
+ORG_DESCRIPTION = \"Non-custodial AI-managed treasury & payroll infrastructure on Stellar for LatAm companies.\"
+ORG_SUPPORT_EMAIL = \"legal@contextio.xyz\"
+"""
+
+  SEP10_ENABLED = "true"
+  SEP10_WEB_AUTH_DOMAIN = "contextio-anchor-platform.fly.dev"
+  SEP10_HOME_DOMAINS = "contextio-anchor-platform.fly.dev"
+
+  SEP12_ENABLED = "true"
+
+  SEP31_ENABLED = "true"
+  SEP31_DEPOSIT_INFO_GENERATOR_TYPE = "self"
+
+  SEP38_ENABLED = "true"
+
+  DATA_TYPE = "postgres"
+  # NOT .flycast:5432 (Fly's own suggested connection string) — the pgjdbc
+  # driver's SSL handshake against the flycast anycast proxy gets terminated
+  # mid-negotiation ("Remote host terminated the handshake"), and Anchor
+  # Platform's constructPostgressUrl() hardcodes the JDBC URL with no way to
+  # pass sslmode=disable. Going straight to the machine's own 6PN address on
+  # the real Postgres port (5433, not the proxy's 5432) connects cleanly —
+  # verified via `fly postgres connect` before switching this.
+  DATA_SERVER = "contextio-anchor-db.internal:5433"
+  DATA_DATABASE = "postgres"
+  DATA_SCHEMA = "anchor_platform"
+  DATA_FLYWAY_ENABLED = "true"
+
+  APP_LOGGING_STELLAR_LEVEL = "INFO"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 100
+    hard_limit = 150
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "3s"
+    grace_period = "30s"
+    method = "get"
+    path = "/.well-known/stellar.toml"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "2048mb"

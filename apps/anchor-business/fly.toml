@@ -1,0 +1,45 @@
+# Fly.io config for Contextio's self-hosted Anchor Platform business/callback
+# server. Called internally by the `platform` app (contextio-anchor-platform)
+# — see infra/anchor-platform/platform.fly.toml.
+#
+# Deploy (from the monorepo root):
+#   fly deploy --config apps/anchor-business/fly.toml --dockerfile apps/anchor-business/Dockerfile
+
+app = "contextio-anchor-business"
+# gru (São Paulo) is hitting real-time capacity contention on this account
+# (alternating "insufficient memory"/"insufficient CPUs" errors on every
+# retry) — iad (Ashburn) is where nirium-agent/nirium-agent-mainnet already
+# run successfully on this same account, so it has verified headroom.
+primary_region = "iad"
+
+[build]
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8091"
+  STELLAR_NETWORK = "testnet"
+  STELLAR_RPC_URL = "https://soroban-testnet.stellar.org"
+  PLATFORM_API_BASE_URL = "http://contextio-anchor-platform.internal:8085"
+
+[http_service]
+  internal_port = 8091
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 100
+    hard_limit = 150
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "10s"
+    method = "get"
+    path = "/healthz"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

@@ -1,0 +1,59 @@
+# Single-broker Kafka (KRaft mode, no Zookeeper) for the self-hosted Anchor
+# Platform's internal event queue (SEP-24/31 status change events between the
+# `platform` process and our business/callback server). Not exposed publicly —
+# reachable only from other apps in this Fly org via 6PN at
+# contextio-anchor-kafka.internal:29092. Mirrors the exact image + KRaft config
+# SDF's own quick-run reference docker-compose.yaml uses (no persistent volume
+# there either — this is a testnet/demo-scale broker, not a production cluster).
+#
+# Deploy: fly deploy --config infra/anchor-platform/kafka.fly.toml -a contextio-anchor-kafka
+
+app = "contextio-anchor-kafka"
+primary_region = "gru"
+
+[build]
+  image = "confluentinc/cp-kafka:7.4.3"
+
+[env]
+  KAFKA_NODE_ID = "1"
+  KAFKA_CONTROLLER_LISTENER_NAMES = "CONTROLLER"
+  KAFKA_CONTROLLER_QUORUM_VOTERS = "1@localhost:29096"
+  KAFKA_PROCESS_ROLES = "broker,controller"
+  KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS = "0"
+  KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR = "1"
+  CLUSTER_ID = "Y29udGV4dGlvLWFuY2hvcg=="
+  KAFKA_LOG_DIRS = "/tmp/kraft-combined-logs"
+  KAFKA_BROKER_ID = "1"
+  KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR = "1"
+  KAFKA_AUTO_CREATE_TOPICS_ENABLE = "true"
+  # Bind on all interfaces inside the machine; advertise the Fly 6PN internal
+  # hostname so the `platform` app (a different Fly app) can actually resolve
+  # and reach it post-handshake — a docker-compose service name like "kafka"
+  # wouldn't resolve here, there's no compose network on Fly.
+  KAFKA_LISTENERS = "PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29096"
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP = "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
+  KAFKA_ADVERTISED_LISTENERS = "PLAINTEXT://contextio-anchor-kafka.internal:29092"
+  KAFKA_INTER_BROKER_LISTENER_NAME = "PLAINTEXT"
+  # Confluent's default heap (-Xmx1G) doesn't leave the JVM any headroom on a
+  # 1024mb machine (native memory allocation fails outright). This broker only
+  # ever serves the Anchor Platform's own internal event topics — a small
+  # heap is plenty.
+  KAFKA_HEAP_OPTS = "-Xmx512M -Xms256M"
+
+# No [http_service] — Kafka isn't HTTP. TCP-only, private network only (no
+# public [[services]] block either — nothing outside this Fly org should ever
+# reach the broker directly).
+[[services]]
+  internal_port = 29092
+  protocol = "tcp"
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[services.ports]]
+    port = 29092
+    handlers = []
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1024mb"

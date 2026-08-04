@@ -1,0 +1,50 @@
+ACCOUNTS = ["GB7U6HCA7YYQICFOCAANVHD5LYM4UWQM67SZXTC4JKFMYOQ2IBGB5EH6"]
+VERSION = "1.0.0"
+SIGNING_KEY = "GB7U6HCA7YYQICFOCAANVHD5LYM4UWQM67SZXTC4JKFMYOQ2IBGB5EH6"
+NETWORK_PASSPHRASE = "Test SDF Network ; September 2015"
+
+WEB_AUTH_ENDPOINT = "https://contextio-anchor-platform.fly.dev/auth"
+KYC_SERVER = "https://contextio-anchor-platform.fly.dev/sep12"
+DIRECT_PAYMENT_SERVER = "https://contextio-anchor-platform.fly.dev/sep31"
+ANCHOR_QUOTE_SERVER = "https://contextio-anchor-platform.fly.dev/sep38"
+
+[[CURRENCIES]]
+code = "native"
+status = "test"
+is_asset_anchored = false
+anchor_asset_type = "crypto"
+desc = "XLM, the native token of the Stellar network."
+
+[[CURRENCIES]]
+code = "USD"
+status = "test"
+is_asset_anchored = true
+anchor_asset_type = "fiat"
+desc = "US Dollar, settled via wire — testnet demo corridor."
+
+[[CURRENCIES]]
+code = "BRL"
+status = "test"
+is_asset_anchored = true
+anchor_asset_type = "fiat"
+desc = "Brazilian Real, settled via PIX — testnet demo corridor."
+
+[[CURRENCIES]]
+code = "ARS"
+status = "test"
+is_asset_anchored = true
+anchor_asset_type = "fiat"
+desc = "Argentine Peso, settled via Transferencias 3.0 — testnet demo corridor."
+
+[[CURRENCIES]]
+code = "COP"
+status = "test"
+is_asset_anchored = true
+anchor_asset_type = "fiat"
+desc = "Colombian Peso, settled via Bre-B — testnet demo corridor."
+
+[DOCUMENTATION]
+ORG_NAME = "Contextio"
+ORG_URL = "https://www.contextio.xyz"
+ORG_DESCRIPTION = "Non-custodial AI-managed treasury & payroll infrastructure on Stellar for LatAm companies."
+ORG_SUPPORT_EMAIL = "legal@contextio.xyz"
