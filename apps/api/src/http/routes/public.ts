@@ -174,16 +174,16 @@ export function publicRouter(): Router {
   });
 
   /**
-   * Real SEP-38 indicative price from the same reference anchor — the firm
-   * quote a SEP-31 institutional send would use instead of an estimated FX
-   * buffer. Only prices USDC/XLM/SRT against iso4217:USD and iso4217:CAD on
-   * this anchor today — no BRL/ARS/COP, same upstream limitation Reflector
-   * already has for LATAM fiat pairs. Read-only, moves no funds.
+   * Real SEP-38 indicative price from Contextio's own self-hosted Anchor
+   * Platform (infra/anchor-platform/) — the firm quote a SEP-31
+   * institutional send would use instead of an estimated FX buffer. Prices
+   * XLM against iso4217:USD/BRL/ARS/COP — real LatAm corridors the old SDF
+   * reference anchor never covered (USD/CAD only). Read-only, moves no funds.
    */
   router.get("/anchor/sep38", async (req, res, next) => {
     try {
       const config = env();
-      if (config.STELLAR_NETWORK === "mainnet" && config.ANCHOR_SEP24_URL.includes("testanchor.stellar.org")) {
+      if (config.STELLAR_NETWORK === "mainnet" && config.ANCHOR_SEP3138_URL.includes("contextio-anchor-platform")) {
         res.json({
           live: false,
           network: "mainnet",
@@ -191,10 +191,6 @@ export function publicRouter(): Router {
         });
         return;
       }
-      // Defaults to XLM: verified live against the reference anchor. Its USDC
-      // price entry (listed in /sep38/info) currently 502s on the anchor's own
-      // backend regardless of caller — an upstream issue, not ours; `sellAsset`
-      // stays overridable via query param if/when that's fixed upstream.
       const sellAsset = typeof req.query.sellAsset === "string" ? req.query.sellAsset : "stellar:native";
       const sellAmount = typeof req.query.sellAmount === "string" ? req.query.sellAmount : "100";
       const prices = await req.container.anchor.getSep38Prices(sellAsset, sellAmount);
@@ -206,15 +202,18 @@ export function publicRouter(): Router {
   });
 
   /**
-   * Real SEP-31 capabilities (which assets this anchor accepts for
-   * institutional cross-border send). Read-only discovery, no funds moved —
-   * actually *sending* still needs a licensed anchor relationship (business
-   * step, not code); this proves the protocol integration itself is real.
+   * Real SEP-31 capabilities (which assets Contextio's own self-hosted
+   * anchor accepts for institutional cross-border send — native/BRL/ARS/COP,
+   * all with real receive limits and funding methods configured, unlike the
+   * old SDF reference anchor whose own /sep31/info returns an empty
+   * `receive` map). Read-only discovery, no funds moved — actually *sending*
+   * still needs a licensed local off-ramp partner (business step, not code);
+   * this proves the protocol integration itself is real.
    */
   router.get("/anchor/sep31", async (req, res, next) => {
     try {
       const config = env();
-      if (config.STELLAR_NETWORK === "mainnet" && config.ANCHOR_SEP24_URL.includes("testanchor.stellar.org")) {
+      if (config.STELLAR_NETWORK === "mainnet" && config.ANCHOR_SEP3138_URL.includes("contextio-anchor-platform")) {
         res.json({
           live: false,
           network: "mainnet",

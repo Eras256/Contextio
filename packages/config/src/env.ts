@@ -78,6 +78,16 @@ export const serverEnvSchema = baseEnvSchema.extend({
   BLEND_ASSET_ID: z.string().optional().or(z.literal("")),
   /** SEP-24 off-ramp anchor base URL (testnet reference anchor by default). */
   ANCHOR_SEP24_URL: z.string().default("https://testanchor.stellar.org"),
+  /**
+   * SEP-31/38 anchor base URL — Contextio's own self-hosted Anchor Platform
+   * (infra/anchor-platform/), not the SDF reference anchor SEP-24 still
+   * uses. Real LatAm corridors (PIX/BRL, Transferencias 3.0/ARS, Bre-B/COP)
+   * the reference anchor doesn't price and has no configured receive
+   * assets for. Testnet-only default — fly.mainnet.toml deliberately
+   * doesn't override this, so the mainnet gate in public.ts routes catches
+   * it the same way it already catches ANCHOR_SEP24_URL.
+   */
+  ANCHOR_SEP3138_URL: z.string().default("https://contextio-anchor-platform.fly.dev"),
   // Signer for Blend supply/withdraw. Defaults to STELLAR_SERVICE_SECRET, but for
   // USDC lending it must be the account that actually holds the BlendUSDC (the
   // agent wallet), so this overrides the signer for the Blend client only.

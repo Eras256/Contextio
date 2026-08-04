@@ -3,6 +3,14 @@ import { type Logger, stellar } from "@contextio/shared";
 export interface AnchorConfig {
   /** Anchor home domain base URL (serves /.well-known/stellar.toml). */
   sep24Url: string;
+  /**
+   * Separate anchor for SEP-31/38 — Contextio's own self-hosted Anchor
+   * Platform, not the SEP-24 reference anchor above. Different anchor
+   * entirely: real LatAm corridors, no licensed off-ramp behind it yet
+   * (same "protocol real, settlement corridor not" framing SEP-24 already
+   * has), but genuinely our own infrastructure, not someone else's demo.
+   */
+  sep3138Url: string;
   /** Key that proves account control in SEP-10 (the treasury/agent wallet). */
   signerSecret?: string;
   networkPassphrase: string;
@@ -17,12 +25,14 @@ export interface AnchorConfig {
  */
 export class AnchorClient {
   private readonly base: string;
+  private readonly sep3138Base: string;
 
   constructor(
     private readonly config: AnchorConfig,
     private readonly logger: Logger,
   ) {
     this.base = config.sep24Url.replace(/\/$/, "");
+    this.sep3138Base = config.sep3138Url.replace(/\/$/, "");
   }
 
   /** True when we can sign the SEP-10 challenge (a signer key is configured). */
@@ -41,11 +51,11 @@ export class AnchorClient {
 
   /**
    * Real SEP-1 lookup for the SEP-31 (institutional send) and SEP-38 (anchor
-   * quote) server URLs, alongside the SEP-24/10 ones above. Same anchor, same
-   * `.well-known/stellar.toml` — SDF's public reference anchor publishes both.
+   * quote) server URLs — against `sep3138Base` (Contextio's own self-hosted
+   * Anchor Platform), a different anchor entirely from the SEP-24 one above.
    */
   private async sep3138Endpoints(signal: AbortSignal): Promise<{ quoteServer: string | null; directPayment: string | null }> {
-    const toml = await (await fetch(`${this.base}/.well-known/stellar.toml`, { signal })).text();
+    const toml = await (await fetch(`${this.sep3138Base}/.well-known/stellar.toml`, { signal })).text();
     const g = (k: string) => toml.match(new RegExp(`${k}\\s*=\\s*"([^"]+)"`))?.[1] ?? null;
     return {
       quoteServer: g("ANCHOR_QUOTE_SERVER")?.replace(/\/$/, "") ?? null,
@@ -55,10 +65,10 @@ export class AnchorClient {
 
   /**
    * SEP-38 indicative price — no auth required by spec for `GET /prices`.
-   * This is what a firm FX quote before a SEP-31 settlement is built on; the
-   * reference anchor only prices USDC/XLM/SRT against iso4217:USD and
-   * iso4217:CAD today (no BRL/ARS/COP), same limitation Reflector already has
-   * for LATAM fiat pairs — real integration, upstream-limited coverage.
+   * This is what a firm FX quote before a SEP-31 settlement is built on.
+   * Contextio's own self-hosted anchor prices XLM against real LatAm
+   * corridors (BRL/ARS/COP, plus USD) — the SDF reference anchor only ever
+   * covered USD/CAD, no BRL/ARS/COP.
    */
   async getSep38Prices(sellAsset: string, sellAmount: string): Promise<unknown> {
     const ctrl = new AbortController();
@@ -79,7 +89,10 @@ export class AnchorClient {
   /**
    * SEP-31 capabilities — which assets this anchor accepts for institutional
    * cross-border send, and whether it requires/supports a SEP-38 quote first.
-   * Read-only discovery call, no auth, no funds moved.
+   * Read-only discovery call, no auth, no funds moved. Contextio's own
+   * anchor actually has receive assets configured (native/BRL/ARS/COP) —
+   * the SDF reference anchor's own /sep31/info returns an empty `receive`
+   * map, so nothing could ever settle through it even in principle.
    */
   async getSep31Info(): Promise<unknown> {
     const ctrl = new AbortController();

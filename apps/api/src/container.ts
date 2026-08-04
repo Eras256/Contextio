@@ -125,6 +125,7 @@ export function createContainer(): Container {
   const anchor = new AnchorClient(
     {
       sep24Url: config.ANCHOR_SEP24_URL,
+      sep3138Url: config.ANCHOR_SEP3138_URL,
       signerSecret: config.BLEND_SIGNER_SECRET || config.STELLAR_SERVICE_SECRET || undefined,
       networkPassphrase: config.STELLAR_NETWORK_PASSPHRASE,
     },
