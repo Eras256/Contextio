@@ -111,6 +111,19 @@ export const serverEnvSchema = baseEnvSchema.extend({
 
   // Public Stellar address of the autonomous agent (shown in the Home live feed).
   AGENT_PUBLIC_ADDRESS: z.string().optional().or(z.literal("")),
+
+  // OpenZeppelin's hosted Channels service — fee-sponsored submission with no
+  // platform signer key involved (the fund account lives on their side, not
+  // ours). Unset by default; get a key at https://channels.openzeppelin.com/gen
+  // (mainnet) or .../testnet/gen. Safe to enable on mainnet — see RelayerClient.
+  OZ_CHANNELS_API_KEY: z.string().optional().or(z.literal("")),
+  OZ_CHANNELS_BASE_URL: z.string().url().default("https://channels.openzeppelin.com/testnet"),
+
+  // Mainnet allowlist ("por invitación"): on STELLAR_NETWORK=mainnet, the
+  // self-custody treasury/payout endpoints are further restricted to these
+  // tenant ids — a stand-in for the KYB/tier gate on the Milestone 2 roadmap.
+  // Ignored on testnet. Empty on mainnet means nobody is allowed yet.
+  MAINNET_ALLOWLIST_TENANT_IDS: csv,
 });
 
 /** Worker-only extras layered on top of the server schema. */
@@ -138,12 +151,50 @@ function parseOrThrow<T extends z.ZodTypeAny>(
   return parsed.data;
 }
 
+/**
+ * Mainnet must be receive-only: this process may never hold a key capable of
+ * moving real client funds. This is not a policy switch to be toggled back on
+ * — it is the load-bearing control behind every "we never custody funds"
+ * claim in the legal/compliance posture (see contextio-mainnet-launch-plan).
+ * Any hot secret configured alongside STELLAR_NETWORK=mainnet fails boot
+ * immediately, so misconfiguration can never silently ship a custodial signer
+ * to production. Deploy a *separate* mainnet-scoped instance with these
+ * secrets unset for the read-only surface (oracle, LCP, audit trail, anchor
+ * status); keep the operational keys only on testnet-scoped deployments.
+ */
+function assertMainnetHasNoHotKey(config: {
+  STELLAR_NETWORK: StellarNetwork;
+  STELLAR_SERVICE_SECRET?: string;
+  BLEND_SIGNER_SECRET?: string;
+}): void {
+  if (config.STELLAR_NETWORK !== "mainnet") return;
+  const offenders = (
+    [
+      ["STELLAR_SERVICE_SECRET", config.STELLAR_SERVICE_SECRET],
+      ["BLEND_SIGNER_SECRET", config.BLEND_SIGNER_SECRET],
+    ] as const
+  ).filter(([, v]) => Boolean(v));
+  if (offenders.length > 0) {
+    const names = offenders.map(([n]) => n).join(", ");
+    throw new Error(
+      `Refusing to boot: STELLAR_NETWORK=mainnet with a signer secret present (${names}). ` +
+        `Mainnet must be receive-only — this process cannot be allowed to sign transactions ` +
+        `that move real client funds. Unset these secrets for the mainnet deployment, or run ` +
+        `against testnet while the custodial paths are still in use.`,
+    );
+  }
+}
+
 export function loadServerEnv(source: NodeJS.ProcessEnv = process.env): ServerEnv {
-  return parseOrThrow(serverEnvSchema, source);
+  const config = parseOrThrow(serverEnvSchema, source);
+  assertMainnetHasNoHotKey(config);
+  return config;
 }
 
 export function loadWorkerEnv(source: NodeJS.ProcessEnv = process.env): WorkerEnv {
-  return parseOrThrow(workerEnvSchema, source);
+  const config = parseOrThrow(workerEnvSchema, source);
+  assertMainnetHasNoHotKey(config);
+  return config;
 }
 
 export function loadBaseEnv(source: NodeJS.ProcessEnv = process.env): BaseEnv {

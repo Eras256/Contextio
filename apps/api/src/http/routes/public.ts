@@ -123,7 +123,21 @@ export function publicRouter(): Router {
    */
   router.get("/anchor", async (_req, res, next) => {
     try {
-      const base = env().ANCHOR_SEP24_URL.replace(/\/$/, "");
+      const config = env();
+      // The default ANCHOR_SEP24_URL is SDF's *testnet* reference anchor. On a
+      // mainnet deployment, serving its data would misrepresent a testnet-only
+      // anchor as a real production capability — there is no licensed mainnet
+      // anchor configured yet (see README "Production last mile"). Say so
+      // plainly instead of silently fetching testnet data under a mainnet label.
+      if (config.STELLAR_NETWORK === "mainnet" && config.ANCHOR_SEP24_URL.includes("testanchor.stellar.org")) {
+        res.json({
+          live: false,
+          network: "mainnet",
+          reason: "No licensed production SEP-24 anchor configured yet — local off-ramp (PIX/Bre-B) requires one.",
+        });
+        return;
+      }
+      const base = config.ANCHOR_SEP24_URL.replace(/\/$/, "");
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 8000);
       try {
@@ -160,6 +174,78 @@ export function publicRouter(): Router {
   });
 
   /**
+   * Real SEP-38 indicative price from the same reference anchor — the firm
+   * quote a SEP-31 institutional send would use instead of an estimated FX
+   * buffer. Only prices USDC/XLM/SRT against iso4217:USD and iso4217:CAD on
+   * this anchor today — no BRL/ARS/COP, same upstream limitation Reflector
+   * already has for LATAM fiat pairs. Read-only, moves no funds.
+   */
+  router.get("/anchor/sep38", async (req, res, next) => {
+    try {
+      const config = env();
+      if (config.STELLAR_NETWORK === "mainnet" && config.ANCHOR_SEP24_URL.includes("testanchor.stellar.org")) {
+        res.json({
+          live: false,
+          network: "mainnet",
+          reason: "No licensed production SEP-31/38 anchor configured yet.",
+        });
+        return;
+      }
+      // Defaults to XLM: verified live against the reference anchor. Its USDC
+      // price entry (listed in /sep38/info) currently 502s on the anchor's own
+      // backend regardless of caller — an upstream issue, not ours; `sellAsset`
+      // stays overridable via query param if/when that's fixed upstream.
+      const sellAsset = typeof req.query.sellAsset === "string" ? req.query.sellAsset : "stellar:native";
+      const sellAmount = typeof req.query.sellAmount === "string" ? req.query.sellAmount : "100";
+      const prices = await req.container.anchor.getSep38Prices(sellAsset, sellAmount);
+      res.setHeader("cache-control", "public, max-age=60");
+      res.json({ live: true, protocol: "SEP-38", sellAsset, sellAmount, prices });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  /**
+   * Real SEP-31 capabilities (which assets this anchor accepts for
+   * institutional cross-border send). Read-only discovery, no funds moved —
+   * actually *sending* still needs a licensed anchor relationship (business
+   * step, not code); this proves the protocol integration itself is real.
+   */
+  router.get("/anchor/sep31", async (req, res, next) => {
+    try {
+      const config = env();
+      if (config.STELLAR_NETWORK === "mainnet" && config.ANCHOR_SEP24_URL.includes("testanchor.stellar.org")) {
+        res.json({
+          live: false,
+          network: "mainnet",
+          reason: "No licensed production SEP-31/38 anchor configured yet.",
+        });
+        return;
+      }
+      const info = await req.container.anchor.getSep31Info();
+      res.setHeader("cache-control", "public, max-age=300");
+      res.json({ live: true, protocol: "SEP-31", info });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  /**
+   * Public, read-only status of the OpenZeppelin Channels fee-sponsorship
+   * relayer. Lets the Integrations page show whether sponsored (gasless)
+   * submission is actually configured — no secrets exposed, just a boolean.
+   */
+  router.get("/relayer", (req, res) => {
+    const relayer = req.container.relayer;
+    res.setHeader("cache-control", "public, max-age=30");
+    res.json({
+      live: relayer.enabled,
+      provider: "openzeppelin-channels",
+      network: env().STELLAR_NETWORK,
+    });
+  });
+
+  /**
    * Start a REAL SEP-24 off-ramp on testnet: SEP-10 auth (challenge → sign →
    * JWT) + SEP-24 interactive withdraw → the anchor's hosted off-ramp URL. This
    * is the genuine mechanism that settles to PIX/Bre-B via a licensed anchor in
@@ -167,6 +253,11 @@ export function publicRouter(): Router {
    */
   router.get("/anchor/withdraw", async (req, res) => {
     try {
+      const config = env();
+      if (config.STELLAR_NETWORK === "mainnet" && config.ANCHOR_SEP24_URL.includes("testanchor.stellar.org")) {
+        res.status(503).json({ ok: false, error: "No licensed production SEP-24 anchor configured yet." });
+        return;
+      }
       const asset = typeof req.query.asset === "string" ? req.query.asset : "USDC";
       const r = await req.container.anchor.initiateWithdraw(asset);
       res.json({ ok: true, ...r });

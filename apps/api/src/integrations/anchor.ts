@@ -40,6 +40,63 @@ export class AnchorClient {
   }
 
   /**
+   * Real SEP-1 lookup for the SEP-31 (institutional send) and SEP-38 (anchor
+   * quote) server URLs, alongside the SEP-24/10 ones above. Same anchor, same
+   * `.well-known/stellar.toml` — SDF's public reference anchor publishes both.
+   */
+  private async sep3138Endpoints(signal: AbortSignal): Promise<{ quoteServer: string | null; directPayment: string | null }> {
+    const toml = await (await fetch(`${this.base}/.well-known/stellar.toml`, { signal })).text();
+    const g = (k: string) => toml.match(new RegExp(`${k}\\s*=\\s*"([^"]+)"`))?.[1] ?? null;
+    return {
+      quoteServer: g("ANCHOR_QUOTE_SERVER")?.replace(/\/$/, "") ?? null,
+      directPayment: g("DIRECT_PAYMENT_SERVER")?.replace(/\/$/, "") ?? null,
+    };
+  }
+
+  /**
+   * SEP-38 indicative price — no auth required by spec for `GET /prices`.
+   * This is what a firm FX quote before a SEP-31 settlement is built on; the
+   * reference anchor only prices USDC/XLM/SRT against iso4217:USD and
+   * iso4217:CAD today (no BRL/ARS/COP), same limitation Reflector already has
+   * for LATAM fiat pairs — real integration, upstream-limited coverage.
+   */
+  async getSep38Prices(sellAsset: string, sellAmount: string): Promise<unknown> {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12_000);
+    try {
+      const { quoteServer } = await this.sep3138Endpoints(ctrl.signal);
+      if (!quoteServer) throw new Error("Anchor does not publish a SEP-38 quote server");
+      const url = `${quoteServer}/prices?sell_asset=${encodeURIComponent(sellAsset)}&sell_amount=${encodeURIComponent(sellAmount)}`;
+      const res = await fetch(url, { signal: ctrl.signal });
+      const body = await res.json();
+      if (!res.ok) throw new Error(`SEP-38 prices failed: ${JSON.stringify(body)}`);
+      return body;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  /**
+   * SEP-31 capabilities — which assets this anchor accepts for institutional
+   * cross-border send, and whether it requires/supports a SEP-38 quote first.
+   * Read-only discovery call, no auth, no funds moved.
+   */
+  async getSep31Info(): Promise<unknown> {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12_000);
+    try {
+      const { directPayment } = await this.sep3138Endpoints(ctrl.signal);
+      if (!directPayment) throw new Error("Anchor does not publish a SEP-31 direct payment server");
+      const res = await fetch(`${directPayment}/info`, { signal: ctrl.signal });
+      const body = await res.json();
+      if (!res.ok) throw new Error(`SEP-31 info failed: ${JSON.stringify(body)}`);
+      return body;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  /**
    * Real SEP-10 auth + SEP-24 interactive withdraw → the anchor's hosted off-ramp
    * URL (KYC + amount happen on the anchor's page). Throws with the anchor's
    * reason on any failure.

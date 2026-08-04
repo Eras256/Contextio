@@ -74,6 +74,46 @@ export const runSchema = z.object({
   dryRun: z.boolean().default(false),
 });
 
+/**
+ * Build unsigned XDRs for a self-custody payroll run: the caller's own
+ * treasury wallet pays and records the run, the platform never holds the
+ * funds. Gated the same way the on-chain contract restricts recipients to
+ * independent service providers (Art. 101 LFT bars paying subordinate salary
+ * in a non-legal-tender asset) — `contractorAttestation` must be explicit,
+ * per run, not a one-time account setting, so it can't be forgotten.
+ */
+export const preparePayrollRunSchema = z.object({
+  scheduleId: z.string().uuid(),
+  address: z.string().regex(/^G[A-Z2-7]{55}$/u, "Expected a Stellar public key (G...)"),
+  contractorAttestation: z.literal(true, {
+    errorMap: () => ({
+      message:
+        "contractorAttestation must be true: this run's recipients are independent contractors/freelancers under a commercial contract, never subordinate employees (LFT Art. 101 requires salary in legal-tender currency). Ahead of LFPIORPI Fracción XVI, effective 2027-01-17.",
+    }),
+  }),
+  acknowledgeTerms: z.literal(true, {
+    errorMap: () => ({ message: "acknowledgeTerms must be true to prepare a self-custody payout." }),
+  }),
+});
+
+export const submitPayrollRunSchema = z
+  .object({
+    runId: z.string().uuid(),
+    scheduleId: z.string().uuid(),
+    // Echoed back from `prepare` rather than recomputed, so the audit record
+    // references the exact legal binding that was actually signed on-chain.
+    legalContextId: z.string().min(1),
+    legalContextHash: z.string().min(1),
+    // null when `prepare` didn't return one (our payroll contract isn't
+    // deployed on this network — mainnet, pre-audit); the payment alone
+    // still settles and is recorded off-chain instead.
+    signedExecuteRunXdr: z.string().min(1).max(50_000).nullable(),
+    signedPaymentXdr: z.string().min(1).max(50_000).nullable(),
+  })
+  .refine((v) => v.signedExecuteRunXdr || v.signedPaymentXdr, {
+    message: "At least one of signedExecuteRunXdr or signedPaymentXdr is required",
+  });
+
 export const publishLegalSchema = z.object({
   providerLegalName: z.string().min(1),
   providerJurisdiction: z.string().min(2),

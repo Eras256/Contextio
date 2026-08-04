@@ -19,7 +19,19 @@ export function legalRouter(): Router {
         res.json({ published: false });
         return;
       }
-      res.json({ published: true, hash: current.hash, document: current.document });
+      // Sibling metadata, deliberately outside `document` — hashLegalContext()
+      // hashes only the canonical document, so this never affects the on-chain
+      // hash or third-party verification. Declared, not hidden: until a
+      // licensed attorney signs off, nobody consuming this should treat the
+      // dispute-resolution/governing-law terms as final (mirrors the banner on
+      // the public /legal-context page).
+      res.json({
+        published: true,
+        hash: current.hash,
+        document: current.document,
+        reviewStatus: "interim",
+        reviewNote: "Pending review by a licensed attorney — not yet final or legally binding.",
+      });
     } catch (e) {
       next(e);
     }

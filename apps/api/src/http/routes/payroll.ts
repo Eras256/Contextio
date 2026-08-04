@@ -1,7 +1,14 @@
 import { Router } from "express";
 import { requireCapability } from "../middleware/rbac.js";
+import { requireMainnetAllowlist } from "../middleware/mainnetGate.js";
 import { requireCtx, HttpError } from "../context.js";
-import { employeeSchema, runSchema, scheduleSchema } from "../schemas.js";
+import {
+  employeeSchema,
+  preparePayrollRunSchema,
+  runSchema,
+  scheduleSchema,
+  submitPayrollRunSchema,
+} from "../schemas.js";
 
 export function payrollRouter(): Router {
   const router = Router();
@@ -113,6 +120,58 @@ export function payrollRouter(): Router {
       } catch (opErr) {
         // Surface the real settlement reason (insufficient funds, trustline, …)
         // instead of a generic 500.
+        const msg = opErr instanceof Error ? opErr.message : String(opErr);
+        res.status(msg === "Schedule not found" ? 404 : 400).json({ error: msg });
+      }
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // ── Self-custody payouts (user-signed) ────────────────────────────────
+  // "Payouts", not payroll: recipients must be independent contractors, never
+  // subordinate employees — see preparePayrollRunSchema. This is the only
+  // payroll path allowed on a mainnet deployment (the agent-paid `POST /runs`
+  // above requires a platform signer secret, which mainnet never has).
+  // 1) Build unsigned XDRs the caller signs in their own wallet (Freighter).
+  router.post("/runs/prepare", requireCapability("payroll.execute"), requireMainnetAllowlist(), async (req, res, next) => {
+    try {
+      const ctx = requireCtx(req);
+      const b = preparePayrollRunSchema.parse(req.body);
+      try {
+        const prepared = await req.container.payroll.prepareRun({
+          tenantId: ctx.tenantId,
+          scheduleId: b.scheduleId,
+          address: b.address,
+        });
+        res.json(prepared);
+      } catch (opErr) {
+        const msg = opErr instanceof Error ? opErr.message : String(opErr);
+        res.status(msg === "Schedule not found" ? 404 : 400).json({ error: msg });
+      }
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // 2) Submit the user-signed envelope(s) and record the run.
+  router.post("/runs/submit", requireCapability("payroll.execute"), requireMainnetAllowlist(), async (req, res, next) => {
+    try {
+      const ctx = requireCtx(req);
+      const b = submitPayrollRunSchema.parse(req.body);
+      try {
+        const run = await req.container.payroll.submitRun({
+          tenantId: ctx.tenantId,
+          runId: b.runId,
+          scheduleId: b.scheduleId,
+          actorId: ctx.userId,
+          legalContextId: b.legalContextId,
+          legalContextHash: b.legalContextHash,
+          signedExecuteRunXdr: b.signedExecuteRunXdr,
+          signedPaymentXdr: b.signedPaymentXdr,
+        });
+        res.status(201).json(run);
+      } catch (opErr) {
         const msg = opErr instanceof Error ? opErr.message : String(opErr);
         res.status(msg === "Schedule not found" ? 404 : 400).json({ error: msg });
       }

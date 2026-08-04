@@ -170,6 +170,62 @@ export class StellarClient {
     return prepared.toXDR();
   }
 
+  /**
+   * Build (but do NOT sign) a Soroban contract call for an external source
+   * account — the user-signed (self-custody) path for methods we build
+   * ourselves (as opposed to `buildOperationXdr`, which wraps an operation XDR
+   * handed back by an external protocol SDK like Blend's). `prepareTransaction`
+   * attaches the footprint + resource fees; when `sourcePublicKey` matches the
+   * contract call's `require_auth()` address, the envelope's own signature
+   * satisfies that auth entry — no separate auth-entry signing needed.
+   */
+  async buildContractCallXdr(
+    contractId: string,
+    method: string,
+    args: xdr.ScVal[],
+    sourcePublicKey: string,
+  ): Promise<string> {
+    const source = await this.server.getAccount(sourcePublicKey);
+    const contract = new Contract(contractId);
+    const built = new TransactionBuilder(source, {
+      fee: (Number(BASE_FEE) * 100).toString(),
+      networkPassphrase: this.config.networkPassphrase,
+    })
+      .addOperation(contract.call(method, ...args))
+      .setTimeout(180)
+      .build();
+    const prepared = await this.server.prepareTransaction(built);
+    return prepared.toXDR();
+  }
+
+  /**
+   * Build (but do NOT sign) a classic multi-operation Payment transaction from
+   * an external source account — the self-custody counterpart to
+   * `sendPayments`. The caller's own wallet (e.g. a company treasury wallet)
+   * must hold the asset being paid out; this never touches a platform-held key.
+   */
+  async buildPaymentsXdr(
+    sourcePublicKey: string,
+    payments: { destination: string; assetCode: string; assetIssuer: string; amount: string }[],
+  ): Promise<string> {
+    const horizon = new Horizon.Server(this.config.horizonUrl);
+    const account = await horizon.loadAccount(sourcePublicKey);
+    const builder = new TransactionBuilder(account, {
+      fee: (Number(BASE_FEE) * Math.max(1, payments.length)).toString(),
+      networkPassphrase: this.config.networkPassphrase,
+    });
+    for (const p of payments) {
+      builder.addOperation(
+        Operation.payment({
+          destination: p.destination,
+          asset: new Asset(p.assetCode, p.assetIssuer),
+          amount: p.amount,
+        }),
+      );
+    }
+    return builder.setTimeout(180).build().toXDR();
+  }
+
   /** Submit an already-signed transaction envelope (base-64 XDR) and confirm. */
   async submitSignedXdr(signedXdr: string, timeoutMs = 30_000): Promise<InvokeResult> {
     const tx = TransactionBuilder.fromXDR(signedXdr, this.config.networkPassphrase);

@@ -7,6 +7,7 @@ import { BlendClient } from "./integrations/blend.js";
 import { AiAdvisor } from "./integrations/ai.js";
 import { AnchorClient } from "./integrations/anchor.js";
 import { SorobanGateway } from "./integrations/soroban.js";
+import { RelayerClient } from "./integrations/relayer.js";
 import { createOracle, type Oracle } from "./integrations/oracle.js";
 import { ReflectorClient } from "./integrations/reflector.js";
 import { AuditService } from "./services/auditService.js";
@@ -28,6 +29,7 @@ export interface Container {
   defindex: DefindexClient;
   blend: BlendClient;
   soroban: SorobanGateway;
+  relayer: RelayerClient;
   oracle: Oracle;
   reflector: ReflectorClient;
   ai: AiAdvisor;
@@ -83,6 +85,13 @@ export function createContainer(): Container {
     stellarClient,
     logger,
   );
+  // Fee-sponsored submission via OpenZeppelin's hosted Channels service — the
+  // fund account lives on their infrastructure, not ours, so this is safe to
+  // enable on mainnet without touching the boot guard. Unset by default.
+  const relayer = new RelayerClient(
+    { apiKey: config.OZ_CHANNELS_API_KEY || undefined, baseUrl: config.OZ_CHANNELS_BASE_URL },
+    logger,
+  );
   const soroban = new SorobanGateway(
     stellarClient,
     {
@@ -95,6 +104,7 @@ export function createContainer(): Container {
       usdcIssuer: config.USDC_ISSUER || undefined,
     },
     logger,
+    relayer,
   );
   const oracle = createOracle(config, logger);
   const reflector = new ReflectorClient(
@@ -150,6 +160,7 @@ export function createContainer(): Container {
     defindex,
     blend,
     soroban,
+    relayer,
     oracle,
     reflector,
     ai,

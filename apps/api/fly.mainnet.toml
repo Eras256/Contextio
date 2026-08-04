@@ -1,0 +1,85 @@
+# Fly.io config for the Contextio API — MAINNET, read-only + Payouts scope.
+#
+# Deploy (from the monorepo root):
+#   fly deploy --config apps/api/fly.mainnet.toml --dockerfile apps/api/Dockerfile -a contextio-api-mainnet
+#
+# Deliberately absent from [env] and from `fly secrets`: STELLAR_SERVICE_SECRET,
+# BLEND_SIGNER_SECRET, TREASURY_CONTRACT_ID, PAYROLL_CONTRACT_ID, BLEND_*,
+# DEFINDEX_* — packages/config/src/env.ts refuses to boot this process if a
+# signer secret is present alongside STELLAR_NETWORK=mainnet. That's what keeps
+# treasury off and Payouts running via classic USDC payment only (no contract).
+#
+# TODO before real traffic: swap STELLAR_RPC_URL for a dedicated provider
+# (https://developers.stellar.org/docs/data/apis/rpc/providers) — the free
+# public endpoint below is fine to start, not for production load.
+#
+# Fee-sponsored Payouts submission (optional, safe on mainnet — no platform
+# key involved, see apps/api/src/integrations/relayer.ts): generate a key at
+# https://channels.openzeppelin.com/gen and set it as a secret, never in [env]:
+#   fly secrets set -a contextio-api-mainnet OZ_CHANNELS_API_KEY=...
+# Until that's set, Payouts submits directly (client pays their own fee) —
+# fully functional either way, sponsorship is additive.
+
+app = "contextio-api-mainnet"
+primary_region = "gru"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  API_PORT = "8080"
+  API_HOST = "0.0.0.0"
+
+  STELLAR_NETWORK = "mainnet"
+  STELLAR_RPC_URL = "https://mainnet.sorobanrpc.com"
+  STELLAR_HORIZON_URL = "https://horizon.stellar.org"
+  STELLAR_NETWORK_PASSPHRASE = "Public Global Stellar Network ; September 2015"
+
+  # Reflector's public mainnet price oracle (external CEX/DEX feed).
+  REFLECTOR_PRICE_CONTRACT_ID = "CAFJZQWSED6YAWZU3GWRTOCNPPCGBN32L7QV43XX5LZLFTK6JLN34DLN"
+  # Real Circle-issued USDC on Stellar mainnet.
+  USDC_ISSUER = "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
+
+  # OpenZeppelin's hosted fee-sponsorship service (mainnet endpoint — the
+  # /testnet one is the config.ts default). Only takes effect once
+  # OZ_CHANNELS_API_KEY is set as a secret; see the note above.
+  OZ_CHANNELS_BASE_URL = "https://channels.openzeppelin.com"
+
+  LCP_PLATFORM_DOMAIN = "contextio.xyz"
+  # A DEDICATED tenant, separate from the testnet demo tenant — even though
+  # both APIs share one Supabase project, payroll_runs/agent_decisions/audit_logs
+  # have no network column, only tenant_id. Reusing the testnet tenant here
+  # would make the mainnet dashboard display testnet's 24/7 agent activity as
+  # if it were real mainnet history. A fresh, empty tenant is the fix (see
+  # contextio-mainnet-launch-plan memory, 2026-08-04).
+  AUTH_DEMO_TENANT_ID = "adba87a4-bfdf-4b00-bac4-f2f0f1d6bb72"
+  AUTH_DEMO_ROLE = "owner"
+
+  # "Por invitación": only this tenant can reach self-custody Payouts/treasury
+  # prepare-submit on mainnet. Add more ids here only when a company is
+  # actually ready — see requireMainnetAllowlist middleware.
+  MAINNET_ALLOWLIST_TENANT_IDS = "adba87a4-bfdf-4b00-bac4-f2f0f1d6bb72"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 250
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "10s"
+    method = "get"
+    path = "/healthz"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

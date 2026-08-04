@@ -18,6 +18,7 @@
     "@contextio/config": "workspace:*",
     "@contextio/shared": "workspace:*",
     "@contextio/tests": "workspace:*",
+    "@openzeppelin/relayer-plugin-channels": "^0.20.0",
     "@supabase/supabase-js": "^2.47.10",
     "cors": "^2.8.5",
     "express": "^4.21.2",

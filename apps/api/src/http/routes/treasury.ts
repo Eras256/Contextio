@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { requireCapability } from "../middleware/rbac.js";
+import { requireMainnetAllowlist } from "../middleware/mainnetGate.js";
 import { requireCtx } from "../context.js";
 import {
   agentToggleSchema,
@@ -109,7 +110,7 @@ export function treasuryRouter(): Router {
 
   // ── Self-custody (user-signed) move ──────────────────────────────────────
   // 1) Build an unsigned tx the user signs in their own wallet (Freighter).
-  router.post("/prepare", requireCapability("treasury.rebalance"), async (req, res, next) => {
+  router.post("/prepare", requireCapability("treasury.rebalance"), requireMainnetAllowlist(), async (req, res, next) => {
     try {
       requireCtx(req);
       const b = prepareMoveSchema.parse(req.body);
@@ -138,7 +139,7 @@ export function treasuryRouter(): Router {
   });
 
   // 2) Submit the user-signed envelope. LCP-bound + audited, like every settle.
-  router.post("/submit", requireCapability("treasury.rebalance"), async (req, res, next) => {
+  router.post("/submit", requireCapability("treasury.rebalance"), requireMainnetAllowlist(), async (req, res, next) => {
     try {
       const ctx = requireCtx(req);
       const { signedXdr } = submitMoveSchema.parse(req.body);

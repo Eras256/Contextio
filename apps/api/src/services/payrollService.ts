@@ -233,4 +233,159 @@ export class PayrollService {
   listRuns(tenantId: string): Promise<PayrollRun[]> {
     return this.repo.listRuns(tenantId);
   }
+
+  /**
+   * Self-custody counterpart to `executeRun`: builds unsigned XDRs for the
+   * company's own treasury wallet to sign (via Freighter) instead of paying
+   * from a platform-held key. Nothing is persisted yet — `submitRun` writes
+   * the run once the client has actually signed and broadcast it, so an
+   * abandoned prepare (user closes the tab) never leaves an orphaned record.
+   *
+   * Recipients here are contractors/freelancers under a commercial contract,
+   * never subordinate employees: Mexican labor law (LFT Art. 101) requires
+   * salary to be paid in legal-tender currency, so paying an actual "empleado"
+   * in USDC would be illegal for the client. The caller must explicitly
+   * attest to this per run (enforced at the schema layer).
+   */
+  async prepareRun(input: {
+    tenantId: string;
+    scheduleId: string;
+    /** The company treasury wallet that will sign and pay — never a platform key. */
+    address: string;
+  }): Promise<{
+    runId: string;
+    paymentXdr: string | null;
+    /** null when our payroll contract isn't deployed on this network (mainnet, pre-audit). */
+    executeRunXdr: string | null;
+    totalAmount: string;
+    asset: PayrollSchedule["asset"];
+    legalContextId: string;
+    legalContextHash: string;
+  }> {
+    const schedule = await this.repo.getSchedule(input.tenantId, input.scheduleId);
+    if (!schedule) throw new Error("Schedule not found");
+
+    const lines = await this.buildRunLines(input.tenantId, schedule);
+    const totalBaseUnits = lines.reduce((acc, l) => acc + toBaseUnits(l.amount), 0n);
+    if (totalBaseUnits <= 0n) throw new Error("Schedule has no active employees to pay");
+
+    const binding = await this.legal.bindForAction(input.tenantId, [
+      "payroll-execution",
+      "payroll-payout-contractors-only",
+    ]);
+
+    // One-time, non-fund-moving allowlist write (see SorobanGateway.ensureOperator).
+    // On a mainnet deployment (no service secret, per the boot guard) this is a
+    // no-op that returns `added: false` without erroring — the wallet must have
+    // been provisioned as an operator out-of-band beforehand.
+    const ensured = await this.soroban.ensureOperator(input.address);
+    if (!ensured.ok) throw ensured.error;
+
+    const isStellar = (a: string) => /^G[A-Z2-7]{55}$/.test(a);
+    const payouts = lines
+      .filter((l) => isStellar(l.destination))
+      .map((l) => ({ destination: l.destination, amount: (Number(l.amount) / 100).toFixed(2) }));
+
+    const runId = randomUUID();
+    const { paymentXdr, executeRunXdr } = await this.soroban.buildPayrollRunXdrs({
+      tenantId: input.tenantId,
+      runId,
+      totalBaseUnits: totalBaseUnits.toString(),
+      asset: schedule.asset,
+      employeeCount: lines.length,
+      binding,
+      payouts,
+      sourcePublicKey: input.address,
+    });
+
+    return {
+      runId,
+      paymentXdr,
+      executeRunXdr,
+      totalAmount: fromBaseUnits(totalBaseUnits),
+      asset: schedule.asset,
+      legalContextId: binding.contextId,
+      legalContextHash: binding.hash,
+    };
+  }
+
+  /**
+   * Submit the client-signed envelope(s) from `prepareRun` and record the
+   * run. `signedExecuteRunXdr` is null whenever our payroll contract isn't
+   * deployed on this network (mainnet, pre-audit) — the payment is still a
+   * real on-chain settlement, just recorded here in Supabase instead of via
+   * our contract, so it stays fully auditable without needing our unaudited
+   * contract in the mainnet path at all.
+   */
+  async submitRun(input: {
+    tenantId: string;
+    runId: string;
+    scheduleId: string;
+    actorId: string | null;
+    legalContextId: string;
+    legalContextHash: string;
+    signedExecuteRunXdr: string | null;
+    signedPaymentXdr: string | null;
+  }): Promise<PayrollRun> {
+    if (!input.signedPaymentXdr && !input.signedExecuteRunXdr) {
+      throw new Error("Nothing to submit: both signedPaymentXdr and signedExecuteRunXdr are empty");
+    }
+    const schedule = await this.repo.getSchedule(input.tenantId, input.scheduleId);
+    if (!schedule) throw new Error("Schedule not found");
+
+    const lines = await this.buildRunLines(input.tenantId, schedule);
+    const totalBaseUnits = lines.reduce((acc, l) => acc + toBaseUnits(l.amount), 0n);
+
+    let payoutTxHash: string | undefined;
+    if (input.signedPaymentXdr) {
+      const paid = await this.soroban.submitSignedXdr(input.signedPaymentXdr);
+      payoutTxHash = paid.txHash;
+    }
+    let recordTxHash: string | undefined;
+    if (input.signedExecuteRunXdr) {
+      const recorded = await this.soroban.submitSignedXdr(input.signedExecuteRunXdr);
+      recordTxHash = recorded.txHash;
+    }
+    const settledTxHash = payoutTxHash ?? recordTxHash;
+    if (!settledTxHash) throw new Error("No transaction settled");
+
+    const executedAt = new Date().toISOString();
+    const run: PayrollRun = {
+      id: input.runId,
+      tenantId: input.tenantId,
+      scheduleId: schedule.id,
+      status: "completed",
+      totalAmount: fromBaseUnits(totalBaseUnits),
+      asset: schedule.asset,
+      lines,
+      legalContextId: input.legalContextId,
+      legalContextHash: input.legalContextHash,
+      stellarTxHash: settledTxHash,
+      executedAt,
+      createdAt: executedAt,
+    };
+    await this.repo.insertPayrollRun(run);
+
+    await this.audit.record({
+      tenantId: input.tenantId,
+      actorId: input.actorId,
+      actorType: "user",
+      action: "payroll.run.executed",
+      detail: {
+        runId: run.id,
+        total: run.totalAmount,
+        payoutTxHash: payoutTxHash ?? null,
+        recordTxHash: recordTxHash ?? null,
+        onChainContractRecord: Boolean(recordTxHash),
+        selfCustody: true,
+      },
+      legalContextId: input.legalContextId,
+    });
+
+    this.logger.info(
+      { tenantId: input.tenantId, runId: run.id, payoutTxHash, recordTxHash, selfCustody: true },
+      "Payroll run executed (self-custody)",
+    );
+    return run;
+  }
 }

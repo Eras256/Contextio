@@ -30,7 +30,15 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
     "supabase:reset": "supabase db reset",
-    "ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "ship": "pnpm build && pnpm ship:api && pnpm ship:worker && pnpm ship:web",
+    "ship:api": "fly deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile --ha=false",
+    "ship:worker": "fly deploy --config apps/worker/fly.toml --dockerfile apps/worker/Dockerfile",
+    "ship:web": "vercel deploy --prod --cwd apps/web --yes",
+    "deploy": "pnpm ship",
+    "deploy:api": "pnpm ship:api",
+    "deploy:worker": "pnpm ship:worker",
+    "deploy:web": "pnpm ship:web"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
