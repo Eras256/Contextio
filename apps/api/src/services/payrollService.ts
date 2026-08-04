@@ -5,11 +5,43 @@ import type {
   PayrollRun,
   PayrollRunLine,
   PayrollSchedule,
+  ScheduleCadence,
 } from "@contextio/shared";
 import type { Repository } from "../db/repository.js";
 import type { SorobanGateway } from "../integrations/soroban.js";
 import type { LegalContextService } from "./legalContextService.js";
 import type { AuditService } from "./auditService.js";
+
+/**
+ * A failed run must NOT leave `nextRunAt` in the past — the scheduled-payroll
+ * worker job treats any schedule with `nextRunAt <= now` as due and retries
+ * it on every tick (every few minutes). Without ever rescheduling, a single
+ * genuine failure (e.g. insufficient treasury liquidity) turns into an
+ * unbounded retry storm — confirmed live: the same obligation was retried
+ * and failed every ~5 minutes for 8+ hours straight. On failure, push the
+ * retry out by a short backoff instead of the full cadence period, so it
+ * tries again soon but stops hammering.
+ */
+const FAILURE_BACKOFF_MS = 60 * 60 * 1000; // 1 hour
+
+function advanceCadence(from: string, cadence: ScheduleCadence): Date {
+  const next = new Date(from);
+  switch (cadence) {
+    case "weekly":
+      next.setUTCDate(next.getUTCDate() + 7);
+      break;
+    case "biweekly":
+      next.setUTCDate(next.getUTCDate() + 14);
+      break;
+    case "monthly":
+      next.setUTCMonth(next.getUTCMonth() + 1);
+      break;
+    case "one_off":
+      // Doesn't recur — the caller deactivates instead of rescheduling.
+      break;
+  }
+  return next;
+}
 
 export interface UpcomingObligation {
   scheduleId: string;
@@ -196,6 +228,14 @@ export class PayrollService {
     });
     if (!onchain.ok) {
       await this.repo.updatePayrollRun(run.id, { status: "failed" });
+      await this.repo.upsertSchedule({
+        ...schedule,
+        nextRunAt: new Date(Date.now() + FAILURE_BACKOFF_MS).toISOString(),
+      });
+      this.logger.warn(
+        { tenantId: input.tenantId, scheduleId: schedule.id, runId: run.id, err: String(onchain.error) },
+        "Payroll run failed — backed off 1h instead of retrying immediately",
+      );
       throw onchain.error;
     }
 
@@ -208,6 +248,17 @@ export class PayrollService {
       stellarTxHash: settledTxHash,
       executedAt,
     });
+    // Move the schedule to its next natural occurrence — a one-off run never
+    // recurs, everything else advances by cadence from the date it was
+    // *scheduled* for (not "now"), so the rhythm doesn't drift.
+    if (schedule.cadence === "one_off") {
+      await this.repo.upsertSchedule({ ...schedule, active: false });
+    } else {
+      await this.repo.upsertSchedule({
+        ...schedule,
+        nextRunAt: advanceCadence(schedule.nextRunAt, schedule.cadence).toISOString(),
+      });
+    }
     await this.audit.record({
       tenantId: input.tenantId,
       actorId: input.actorId,
