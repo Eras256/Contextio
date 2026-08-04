@@ -1,0 +1,19 @@
+[package]
+name = "contexta-spending-limit-policy"
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+authors = { workspace = true }
+repository = { workspace = true }
+description = "Reusable OpenZeppelin spending-limit policy contract, deployed once and referenced by contexta-smart-treasury's context rule."
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+doctest = false
+
+[dependencies]
+soroban-sdk = "25.3.0"
+stellar-accounts = "=0.7.1"
+
+[dev-dependencies]
+soroban-sdk = { version = "25.3.0", features = ["testutils"] }

@@ -1,0 +1,26 @@
+[package]
+name = "contexta-smart-treasury"
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+authors = { workspace = true }
+repository = { workspace = true }
+description = "Contextio smart-account treasury signer: OpenZeppelin Stellar Smart Accounts, one delegated Ed25519 signer bounded by a spending-limit policy, replacing a raw hot secret key for autonomous rebalancing."
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+doctest = false
+
+# stellar-accounts=0.7.1 was published pinned to soroban-sdk 25.3.x; the rest
+# of the workspace (treasury, payroll) is still on 22.x. Each Soroban contract
+# compiles to its own standalone wasm binary and only ever talks to others via
+# cross-contract calls, never Rust-level linking, so this version skew is
+# safe — it does NOT need to match, unlike a normal Rust workspace where all
+# members typically share one dependency graph.
+[dependencies]
+soroban-sdk = "25.3.0"
+stellar-accounts = "=0.7.1"
+
+[dev-dependencies]
+soroban-sdk = { version = "25.3.0", features = ["testutils"] }
+contexta-spending-limit-policy = { path = "../spending-limit-policy" }

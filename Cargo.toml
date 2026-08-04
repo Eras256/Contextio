@@ -2,7 +2,7 @@
 # pnpm manages the TS/JS packages; this manages the Rust/Soroban side.
 [workspace]
 resolver = "2"
-members = ["contracts/treasury", "contracts/payroll"]
+members = ["contracts/treasury", "contracts/payroll", "contracts/smart-treasury", "contracts/spending-limit-policy"]
 
 [workspace.package]
 version = "0.1.0"
