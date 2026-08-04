@@ -105,11 +105,12 @@ export function ArchitectureDiagram() {
             <path d="M520,112 C430,148 340,150 296,178" />
             <path d="M570,112 L570,176" />
             <path d="M670,210 L757,210" />
-            <path d="M280,242 L150,348" />
-            <path d="M500,242 L330,348" />
-            <path d="M550,242 L500,348" />
-            <path d="M655,348 L590,242" />
-            <path d="M640,242 L800,348" />
+            <path d="M280,242 L110,348" />
+            <path d="M490,242 L250,348" />
+            <path d="M500,242 L400,348" />
+            <path d="M550,242 L560,348" />
+            <path d="M710,348 L590,242" />
+            <path d="M640,242 L860,348" />
           </g>
 
           {/* Company */}
@@ -120,12 +121,13 @@ export function ArchitectureDiagram() {
           <Box x={470} y={178} w={200} h={64} title={t("diagram.engineTitle")} subtitle={t("diagram.engineSub")} accent="#2dd4bf" />
           <Box x={760} y={178} w={200} h={64} title={t("diagram.recordsTitle")} subtitle={t("diagram.recordsSub")} accent="#34d399" />
 
-          {/* Stellar */}
-          <Box x={40} y={348} w={160} h={64} title={t("diagram.contractsTitle")} subtitle={t("diagram.contractsSub")} accent="#2dd4bf" />
-          <Box x={225} y={348} w={160} h={64} title={t("diagram.savingsTitle")} subtitle={t("diagram.savingsSub")} accent="#f5b54a" />
-          <Box x={410} y={348} w={160} h={64} title={t("diagram.lendingTitle")} subtitle={t("diagram.lendingSub")} accent="#fb923c" />
-          <Box x={595} y={348} w={160} h={64} title={t("diagram.oracleTitle")} subtitle={t("diagram.oracleSub")} accent="#a78bfa" />
-          <Box x={780} y={348} w={160} h={64} title={t("diagram.payoutsTitle")} subtitle={t("diagram.payoutsSub")} accent="#38bdf8" />
+          {/* Stellar — six nodes, 145px wide with 10px gaps, fits the same lane width as before */}
+          <Box x={30} y={348} w={145} h={64} title={t("diagram.contractsTitle")} subtitle={t("diagram.contractsSub")} accent="#2dd4bf" />
+          <Box x={185} y={348} w={145} h={64} title={t("diagram.smartAccountTitle")} subtitle={t("diagram.smartAccountSub")} accent="#34d399" />
+          <Box x={340} y={348} w={145} h={64} title={t("diagram.savingsTitle")} subtitle={t("diagram.savingsSub")} accent="#f5b54a" />
+          <Box x={495} y={348} w={145} h={64} title={t("diagram.lendingTitle")} subtitle={t("diagram.lendingSub")} accent="#fb923c" />
+          <Box x={650} y={348} w={145} h={64} title={t("diagram.oracleTitle")} subtitle={t("diagram.oracleSub")} accent="#a78bfa" />
+          <Box x={805} y={348} w={145} h={64} title={t("diagram.payoutsTitle")} subtitle={t("diagram.payoutsSub")} accent="#38bdf8" />
 
           {/* LCP binding chip (cross-cutting) */}
           <rect x={420} y={280} width={300} height={30} rx={15} fill="#a78bfa" fillOpacity={0.12} stroke="#a78bfa" strokeOpacity={0.5} />

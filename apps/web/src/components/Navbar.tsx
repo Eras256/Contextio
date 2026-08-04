@@ -25,7 +25,7 @@ export function Navbar() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-ink-950/80 backdrop-blur max-w-full overflow-hidden">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-ink-950/80 backdrop-blur max-w-full overflow-x-hidden">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-1.5 px-3 sm:gap-4 sm:px-6">
         {/* Brand + network */}
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
