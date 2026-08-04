@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import { AuthProvider } from "@/lib/auth";
 import { I18nProvider } from "@/lib/i18n";
 
@@ -25,12 +26,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable}`}>
-      <body className="min-h-screen">
+    <html lang="en" className={`${display.variable} ${body.variable} max-w-full overflow-x-hidden`}>
+      <body className="min-h-screen max-w-full overflow-x-hidden">
         <div className="aurora-bg" aria-hidden />
         <I18nProvider>
           <AuthProvider>
-            <div className="flex min-h-screen flex-col">
+            <div className="flex min-h-screen max-w-full flex-col overflow-x-hidden">
+              <DisclaimerBanner />
               <Navbar />
               <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6">{children}</main>
               <Footer />

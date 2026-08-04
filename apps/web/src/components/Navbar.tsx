@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { AuthControls } from "@/components/AuthControls";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { AiSelector } from "@/components/AiSelector";
+import { NetworkToggle } from "@/components/NetworkToggle";
 import { useT } from "@/lib/i18n";
 
 const SECTIONS = [
@@ -17,9 +18,6 @@ const SECTIONS = [
   { href: "/docs", key: "nav.docs" },
 ] as const;
 
-const NETWORK = (process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "testnet").toLowerCase();
-const NETWORK_LABEL = NETWORK === "mainnet" ? "Mainnet" : "Testnet";
-
 export function Navbar() {
   const pathname = usePathname();
   const t = useT();
@@ -27,18 +25,15 @@ export function Navbar() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-ink-950/80 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 sm:gap-4 px-4 sm:px-6">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-ink-950/80 backdrop-blur max-w-full overflow-hidden">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-1.5 px-3 sm:gap-4 sm:px-6">
         {/* Brand + network */}
-        <div className="flex items-center gap-2.5">
-          <Link href="/" className="flex items-center gap-2.5">
-            <img src="/logo-icon.png" className="h-8 w-8" alt="Contextio" />
-            <span className="text-base font-semibold tracking-tight text-white">Contextio</span>
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
+          <Link href="/" className="flex items-center gap-2">
+            <img src="/logo-icon.png" className="h-7 w-7 sm:h-8 sm:w-8" alt="Contextio" />
+            <span className="hidden text-base font-semibold tracking-tight text-white min-[380px]:inline">Contextio</span>
           </Link>
-          <span className="hidden items-center gap-1.5 rounded-full border border-brand/25 bg-brand/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand sm:inline-flex">
-            <span className="h-1.5 w-1.5 rounded-full bg-brand shadow-[0_0_6px_#22d3a5]" aria-hidden />
-            {NETWORK_LABEL}
-          </span>
+          <NetworkToggle />
         </div>
 
         {/* Center nav */}
@@ -55,7 +50,7 @@ export function Navbar() {
         </nav>
 
         {/* Right cluster */}
-        <div className="ml-auto flex items-center gap-2 lg:ml-0">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <LanguageSelector />
           <AiSelector />
           <AuthControls />

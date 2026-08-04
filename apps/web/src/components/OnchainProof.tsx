@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui";
 import { apiBaseUrl } from "@/lib/api";
+import { resolveApiUrl } from "@/lib/network";
 import { useT } from "@/lib/i18n";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API = resolveApiUrl();
 
 interface Info {
   network: string;
@@ -76,7 +77,7 @@ export function OnchainProof() {
         <div className="flex items-center justify-between gap-3 border-t border-white/5 pt-2">
           <span className="text-slate-500">{t("onchain.terms")}</span>
           <a
-            href={`${apiBaseUrl}/.well-known/legal-context.json?domain=contextio.xyz`}
+            href={`${apiBaseUrl()}/.well-known/legal-context.json?domain=contextio.xyz`}
             target="_blank"
             rel="noreferrer"
             className="font-mono text-accent hover:underline"

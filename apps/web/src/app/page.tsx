@@ -54,6 +54,20 @@ export default function HomePage() {
             <LockIcon />
             {t("hero.trust")}
           </p>
+          <div
+            className="animate-fade-up mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-slate-400"
+            style={{ animationDelay: "360ms" }}
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand shadow-[0_0_6px_#22d3a5]" aria-hidden />
+              {t("hero.networkMainnet")}
+            </span>
+            <span className="text-slate-600" aria-hidden>·</span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_#fbbf24]" aria-hidden />
+              {t("hero.networkTestnet")}
+            </span>
+          </div>
         </div>
 
         {/* 3D panel */}

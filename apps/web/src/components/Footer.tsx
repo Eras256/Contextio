@@ -1,9 +1,11 @@
 "use client";
 
 import { useT } from "@/lib/i18n";
+import { useNetwork } from "@/lib/network";
 
 export function Footer() {
   const t = useT();
+  const network = useNetwork();
   return (
     <footer className="border-t border-white/10 bg-ink-950">
       <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 sm:px-6">
@@ -34,7 +36,9 @@ export function Footer() {
           </div>
         </div>
         <div className="border-t border-white/5 pt-6 text-[11px] text-slate-600">
-          <p>{t("footer.tagline")}</p>
+          <p>
+            {t("footer.tagline")} {network === "mainnet" ? t("footer.taglineMainnet") : t("footer.taglineTestnet")}
+          </p>
         </div>
       </div>
     </footer>

@@ -4,8 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
 import { shortHash, localTimeOnly } from "@/lib/format";
+import { resolveApiUrl } from "@/lib/network";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+// This feed always shows the real 24/7 flagship agent, which only runs on
+// testnet — deliberately NOT following the site-wide network toggle (see
+// FlagshipBadge below, which labels this clearly instead of hiding it).
+const API = resolveApiUrl("testnet");
 
 interface Activity {
   id: string;
@@ -191,6 +195,17 @@ export function LiveAgentFeed() {
       </div>
       <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">{t("feed.title")}</h2>
       <p className="mt-1 max-w-lg text-sm text-slate-400">{t("feed.subtitle")}</p>
+
+      {/* This feed always runs on testnet (the only place the 24/7 agent
+          operates) regardless of the site-wide network toggle — labeled
+          plainly rather than hidden, same pattern as nirium.xyz. */}
+      <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-300">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_#fbbf24]" aria-hidden />
+          {t("feed.flagshipBadge")}
+        </span>
+        <span className="text-xs text-slate-500">{t("feed.flagshipCaption")}</span>
+      </div>
 
       {/* Terminal window audit feed */}
       <div className="mt-6 overflow-hidden rounded-2xl border border-brand/20 bg-ink-950/80 shadow-[0_0_50px_-20px_rgba(45,212,191,0.4)] backdrop-blur-md relative before:absolute before:inset-0 before:bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.15)_50%)] before:bg-[length:100%_4px] before:pointer-events-none before:z-10">

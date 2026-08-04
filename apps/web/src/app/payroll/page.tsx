@@ -4,14 +4,14 @@ import { useState } from "react";
 import { Badge, Card, DataBadge, SectionHeader, Skeleton, Stat } from "@/components/ui";
 import { COUNTRY_LABEL, RAIL_LABEL, fromBaseUnits, localDateTime, shortHash, usd, usdBase } from "@/lib/format";
 import { api, type PayrollEmployee, type TreasurySnapshot } from "@/lib/api";
-
-const NETWORK = (process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "testnet").toLowerCase();
-const isTestnet = NETWORK !== "mainnet" && NETWORK !== "public";
-const txUrl = (h: string) =>
-  `https://stellar.expert/explorer/${NETWORK === "mainnet" ? "public" : "testnet"}/tx/${h}`;
 import { useLiveData } from "@/lib/useLiveData";
 import { useT } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
+import { useNetwork } from "@/lib/network";
+import { signWalletTransaction } from "@/lib/wallet";
+
+const txUrl = (h: string, network: "testnet" | "mainnet") =>
+  `https://stellar.expert/explorer/${network === "mainnet" ? "public" : "testnet"}/tx/${h}`;
 
 const EMPTY_TREASURY: TreasurySnapshot = {
   config: null,
@@ -21,7 +21,8 @@ const EMPTY_TREASURY: TreasurySnapshot = {
 
 export default function PayrollPage() {
   const tr = useT();
-  const { accessToken, tenantId, connect, connecting } = useAuth();
+  const network = useNetwork();
+  const { accessToken, tenantId, address, connect, connecting } = useAuth();
   const employeesQ = useLiveData<PayrollEmployee[]>(api.employees, []);
   const obligationsQ = useLiveData(api.obligations, []);
   const treasuryQ = useLiveData(api.treasury, EMPTY_TREASURY);
@@ -139,7 +140,10 @@ export default function PayrollPage() {
       <Card>
         <div className="mb-1 flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-white">{tr("pages.payroll.runsTitle")}</h3>
-          {next?.scheduleId && (
+          {/* Custodial "Pay now" needs a platform signer key — the mainnet API
+              never has one (see mainnet boot guard), so it can only ever work
+              on testnet. Payouts below is the mainnet-capable path. */}
+          {network === "testnet" && next?.scheduleId && (
             <button
               onClick={() => void runPayrollNow()}
               disabled={running}
@@ -187,14 +191,14 @@ export default function PayrollPage() {
                   {localDateTime(run.executedAt ?? run.createdAt)}
                 </span>
               </div>
-              {isTestnet && run.status === "completed" && (
+              {network === "testnet" && run.status === "completed" && (
                 <p className="mt-1 text-[11px] text-slate-500">
                   {usd(Number(run.totalAmount || 0) / 100)} {run.asset} · {tr("pages.payroll.runsScaledNote")}
                 </p>
               )}
               <div className="mt-2 text-xs">
                 {run.stellarTxHash && !run.stellarTxHash.startsWith("sim:") ? (
-                  <a href={txUrl(run.stellarTxHash)} target="_blank" rel="noreferrer" className="font-mono text-brand hover:underline">
+                  <a href={txUrl(run.stellarTxHash, network)} target="_blank" rel="noreferrer" className="font-mono text-brand hover:underline">
                     tx {shortHash(run.stellarTxHash, 8, 6)} ↗
                   </a>
                 ) : (
@@ -208,6 +212,9 @@ export default function PayrollPage() {
           )}
         </div>
       </Card>
+
+      {/* Self-custody Payouts — the mainnet-capable path (see boot guard). */}
+      {next?.scheduleId && <PayoutsPanel auth={{ accessToken, tenantId: tenantId! }} address={address} scheduleId={next.scheduleId} network={network} />}
 
       {/* Funding */}
       <Card className="max-w-xl">
@@ -231,6 +238,101 @@ export default function PayrollPage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+/**
+ * Self-custody Payouts: builds unsigned XDR(s) server-side, the caller signs
+ * with their own wallet, then submits. Contractor-only by design (LFT Art.
+ * 101) — the two checkboxes are required per run, not a one-time setting.
+ */
+function PayoutsPanel({
+  auth,
+  address,
+  scheduleId,
+  network,
+}: {
+  auth: { accessToken: string; tenantId: string };
+  address: string | null;
+  scheduleId: string;
+  network: "testnet" | "mainnet";
+}) {
+  const tr = useT();
+  const [contractorOk, setContractorOk] = useState(false);
+  const [termsOk, setTermsOk] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [tx, setTx] = useState<string | null>(null);
+
+  const run = async () => {
+    if (!address) return setMsg(tr("pages.payroll.payoutsConnectFirst"));
+    if (!contractorOk || !termsOk) return setMsg(tr("pages.payroll.payoutsCheckBoxes"));
+    if (busy) return;
+    setBusy(true);
+    setMsg(null);
+    setTx(null);
+    try {
+      setMsg(tr("pages.payroll.payoutsPreparing"));
+      const prepared = await api.preparePayout(auth, {
+        scheduleId,
+        address,
+        contractorAttestation: true,
+        acknowledgeTerms: true,
+      });
+      setMsg(tr("pages.payroll.payoutsApprove"));
+      const signedExecuteRunXdr = prepared.executeRunXdr ? await signWalletTransaction(prepared.executeRunXdr, address) : null;
+      const signedPaymentXdr = prepared.paymentXdr ? await signWalletTransaction(prepared.paymentXdr, address) : null;
+      setMsg(tr("pages.payroll.payoutsSubmitting"));
+      const settled = await api.submitPayout(auth, {
+        runId: prepared.runId,
+        scheduleId,
+        legalContextId: prepared.legalContextId,
+        legalContextHash: prepared.legalContextHash,
+        signedExecuteRunXdr,
+        signedPaymentXdr,
+      });
+      setTx(settled.stellarTxHash);
+      setMsg(tr("pages.payroll.payoutsDone"));
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card>
+      <h3 className="text-sm font-semibold text-white">{tr("pages.payroll.payoutsTitle")}</h3>
+      <p className="mt-1 text-xs text-slate-400">{tr("pages.payroll.payoutsBody")}</p>
+      {network === "mainnet" && (
+        <p className="mt-2 rounded-lg border border-amber-400/20 bg-amber-400/5 px-3 py-2 text-xs text-amber-300">
+          {tr("pages.payroll.payoutsMainnetNote")}
+        </p>
+      )}
+      <label className="mt-3 flex items-start gap-2 text-xs text-slate-300">
+        <input type="checkbox" checked={contractorOk} onChange={(e) => setContractorOk(e.target.checked)} className="mt-0.5" />
+        {tr("pages.payroll.payoutsContractorLabel")}
+      </label>
+      <label className="mt-2 flex items-start gap-2 text-xs text-slate-300">
+        <input type="checkbox" checked={termsOk} onChange={(e) => setTermsOk(e.target.checked)} className="mt-0.5" />
+        {tr("pages.payroll.payoutsTermsLabel")}
+      </label>
+      <button
+        onClick={() => void run()}
+        disabled={busy || !contractorOk || !termsOk}
+        className="btn-primary mt-3 text-xs disabled:opacity-40"
+      >
+        {busy ? tr("auth.connecting") : tr("pages.payroll.payoutsRun")}
+      </button>
+      {msg && (
+        <p className="mt-3 break-words rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-xs text-slate-300">{msg}</p>
+      )}
+      {tx && (
+        <a href={txUrl(tx, network)} target="_blank" rel="noreferrer" className="mt-2 block font-mono text-xs text-brand hover:underline">
+          tx {shortHash(tx, 8, 6)} ↗
+        </a>
+      )}
+    </Card>
   );
 }
 

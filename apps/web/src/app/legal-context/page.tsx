@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useT } from "@/lib/i18n";
 import { Card } from "@/components/ui";
+import { resolveApiUrl } from "@/lib/network";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API = resolveApiUrl();
 
 // Shape + graceful fallback; the real, published LCP (with the real terms hash)
 // is fetched on mount from the canonical .well-known endpoint.
@@ -102,6 +103,13 @@ export default function LegalContextPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-12 py-6">
+      {/* Draft notice — this document is not lawyer-reviewed yet; see
+          contextio-mainnet-launch-plan. Keep this above the fold and don't
+          remove it until a licensed attorney has actually signed off. */}
+      <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 px-5 py-4 text-sm text-amber-200">
+        <span className="font-semibold uppercase tracking-wide">{t("legal.draftNotice")}</span>
+      </div>
+
       {/* Header section */}
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-brand/10 via-ink-950 to-accent/5 p-8 shadow-2xl">
         <div className="pointer-events-none absolute -right-24 -top-24 h-60 w-60 rounded-full bg-brand/15 blur-3xl" />

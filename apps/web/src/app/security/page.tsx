@@ -3,9 +3,11 @@
 import { Card, SectionHeader } from "@/components/ui";
 import { OnchainProof } from "@/components/OnchainProof";
 import { useT } from "@/lib/i18n";
+import { useNetwork } from "@/lib/network";
 
 export default function SecurityPage() {
   const t = useT();
+  const network = useNetwork();
 
   const pillars = [
     { title: t("pages.security.p1Title"), body: t("pages.security.p1Body") },
@@ -62,8 +64,12 @@ export default function SecurityPage() {
       <OnchainProof />
 
       <div className="rounded-2xl border border-brand/20 bg-brand/5 p-5">
-        <h4 className="text-sm font-semibold text-white">{t("pages.security.noteTitle")}</h4>
-        <p className="mt-1 text-sm text-slate-300">{t("pages.security.noteBody")}</p>
+        <h4 className="text-sm font-semibold text-white">
+          {network === "mainnet" ? t("pages.security.noteTitleMainnet") : t("pages.security.noteTitle")}
+        </h4>
+        <p className="mt-1 text-sm text-slate-300">
+          {network === "mainnet" ? t("pages.security.noteBodyMainnet") : t("pages.security.noteBody")}
+        </p>
       </div>
     </div>
   );

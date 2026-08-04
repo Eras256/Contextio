@@ -3,7 +3,7 @@
  * tenant id (from the auth context). The API verifies the token (JWKS/HS256),
  * checks tenant membership, and enforces RBAC + the Legal Context Protocol.
  */
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+import { resolveApiUrl } from "./network";
 
 export interface ApiAuth {
   accessToken: string;
@@ -85,7 +85,7 @@ export interface LegalState {
 }
 
 async function request<T>(path: string, auth: ApiAuth, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}/api/v1${path}`, {
+  const res = await fetch(`${resolveApiUrl()}/api/v1${path}`, {
     ...init,
     headers: {
       "content-type": "application/json",
@@ -118,6 +118,39 @@ export const api = {
   /** Execute a real payroll run for a schedule (settles USDC on-chain). */
   runPayroll: (auth: ApiAuth, scheduleId: string) =>
     request<PayrollRun>("/payroll/runs", auth, { method: "POST", body: JSON.stringify({ scheduleId }) }),
+
+  /**
+   * Self-custody Payouts (contractors, not employees — never "payroll" in this
+   * flow's copy). Step 1: build unsigned XDR(s) for the caller's own treasury
+   * wallet to sign. Requires this tenant to be on MAINNET_ALLOWLIST_TENANT_IDS
+   * when the API is mainnet-scoped.
+   */
+  preparePayout: (
+    auth: ApiAuth,
+    body: { scheduleId: string; address: string; contractorAttestation: true; acknowledgeTerms: true },
+  ) =>
+    request<{
+      runId: string;
+      paymentXdr: string | null;
+      executeRunXdr: string | null;
+      totalAmount: string;
+      asset: string;
+      legalContextId: string;
+      legalContextHash: string;
+    }>("/payroll/runs/prepare", auth, { method: "POST", body: JSON.stringify(body) }),
+
+  /** Step 2: submit the user-signed envelope(s) from preparePayout. */
+  submitPayout: (
+    auth: ApiAuth,
+    body: {
+      runId: string;
+      scheduleId: string;
+      legalContextId: string;
+      legalContextHash: string;
+      signedExecuteRunXdr: string | null;
+      signedPaymentXdr: string | null;
+    },
+  ) => request<PayrollRun>("/payroll/runs/submit", auth, { method: "POST", body: JSON.stringify(body) }),
   decisions: (auth: ApiAuth) => request<Decision[]>("/agent/decisions", auth),
   legal: (auth: ApiAuth) => request<LegalState>("/legal", auth),
   propose: (
@@ -221,7 +254,7 @@ export interface AiStatus {
 export async function fetchAiStatus(): Promise<AiStatus> {
   const off: AiStatus = { live: false, provider: "none", model: null };
   try {
-    const res = await fetch(`${API_URL}/api/v1/public/ai`, { cache: "no-store" });
+    const res = await fetch(`${resolveApiUrl()}/api/v1/public/ai`, { cache: "no-store" });
     if (!res.ok) return off;
     return (await res.json()) as AiStatus;
   } catch {
@@ -230,7 +263,7 @@ export async function fetchAiStatus(): Promise<AiStatus> {
   }
 }
 
-export const apiBaseUrl = API_URL;
+export const apiBaseUrl = resolveApiUrl;
 
 // ── Wallet sign-in handshake (no bearer) ───────────────────────────────────
 export interface WalletChallenge {
@@ -249,7 +282,7 @@ export interface WalletSession {
 }
 
 async function postPublic<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${API_URL}/api/v1${path}`, {
+  const res = await fetch(`${resolveApiUrl()}/api/v1${path}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
