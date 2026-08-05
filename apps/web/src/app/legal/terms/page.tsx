@@ -29,7 +29,7 @@ const SECTIONS = {
     {
       id: "disputes",
       title: "5. Governing Law and Dispute Resolution",
-      content: `These Terms shall be governed by and construed in accordance with the laws of Brazil, Argentina, and Colombia depending on the jurisdiction of your tenant's registration. Any conflict, claim, or dispute arising out of these terms or our services shall be submitted to the default arbitration channel defined in the LCP manifest: Contextio Default Arbitration, governed by the laws and languages specified in the legal-context.json metadata.`,
+      content: `These Terms shall be governed by and construed in accordance with the laws of Brazil, Argentina, and Colombia depending on the jurisdiction of your tenant's registration. Any conflict, claim, or dispute arising out of these terms or our services shall be submitted to the default arbitration channel defined in the LCP manifest: Contextio Default Arbitration, governed by the laws and languages specified in the contextio-legal-context.json metadata.`,
     },
   ],
   es: [
@@ -56,7 +56,7 @@ const SECTIONS = {
     {
       id: "disputes",
       title: "5. Ley Aplicable y Resolución de Disputas",
-      content: `Estos Términos se regirán e interpretarán de acuerdo con las leyes de Brasil, Argentina y Colombia, según la jurisdicción de registro de su empresa. Cualquier conflicto, reclamo o disputa que surja de estos términos o de nuestros servicios se someterá al canal de arbitraje predeterminado definido en el manifiesto LCP: Arbitraje Predeterminado de Contextio, regulado por las leyes e idiomas especificados en la metadata de legal-context.json.`,
+      content: `Estos Términos se regirán e interpretarán de acuerdo con las leyes de Brasil, Argentina y Colombia, según la jurisdicción de registro de su empresa. Cualquier conflicto, reclamo o disputa que surja de estos términos o de nuestros servicios se someterá al canal de arbitraje predeterminado definido en el manifiesto LCP: Arbitraje Predeterminado de Contextio, regulado por las leyes e idiomas especificados en la metadata de contextio-legal-context.json.`,
     },
   ],
   pt: [
@@ -83,7 +83,7 @@ const SECTIONS = {
     {
       id: "disputes",
       title: "5. Lei Regente e Resolução de Disputas",
-      content: `Estes Termos serão regidos e interpretados de acordo com as leis do Brasil, Argentina e Colômbia, dependendo da jurisdição de registro de sua empresa. Qualquer conflito, reivindicação ou disputa decorrente destes termos ou de nossos serviços será submetido ao canal de arbitragem padrão definido no manifesto LCP: Arbitragem Padrão da Contextio, regido pelas leis e idiomas especificados nos metadados do legal-context.json.`,
+      content: `Estes Termos serão regidos e interpretados de acordo com as leis do Brasil, Argentina e Colômbia, dependendo da jurisdição de registro de sua empresa. Qualquer conflito, reivindicação ou disputa decorrente destes termos ou de nossos serviços será submetido ao canal de arbitragem padrão definido no manifesto LCP: Arbitragem Padrão da Contextio, regido pelas leis e idiomas especificados nos metadados do contextio-legal-context.json.`,
     },
   ],
 };

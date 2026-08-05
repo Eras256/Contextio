@@ -21,7 +21,7 @@ DI composition root (`src/container.ts`) so every layer is unit-testable.
 ```
 GET    /healthz                         liveness (public)
 GET    /readyz                          readiness incl. downstream checks (public)
-GET    /.well-known/legal-context.json  serve tenant LCP doc (public, resolved by Host/?domain)
+GET    /.well-known/contextio-legal-context.json  serve tenant LCP doc (public, resolved by Host/?domain)
 
 GET    /api/v1/treasury                 snapshot (balances, allocation)
 PUT    /api/v1/treasury/config          risk profile + agent params
@@ -33,7 +33,7 @@ GET    /api/v1/payroll/obligations      upcoming obligations + liquidity need
 GET    /api/v1/payroll/runs             history / POST execute (dryRun supported)
 
 GET    /api/v1/legal                    current legal context
-POST   /api/v1/legal/publish            publish/version legal-context.json
+POST   /api/v1/legal/publish            publish/version contextio-legal-context.json
 
 GET    /api/v1/agent/decisions          agent decision log
 POST   /api/v1/agent/propose            evaluate + (optionally) execute a rebalance

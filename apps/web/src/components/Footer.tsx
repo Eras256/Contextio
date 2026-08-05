@@ -15,8 +15,8 @@ export function Footer() {
             <span className="text-sm font-semibold tracking-tight text-white">Contextio</span>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs">
-            <a className="text-slate-500 hover:text-slate-300 transition-colors" href="/.well-known/legal-context.json">
-              legal-context.json
+            <a className="text-slate-500 hover:text-slate-300 transition-colors" href="/.well-known/contextio-legal-context.json">
+              contextio-legal-context.json
             </a>
             <a className="text-slate-500 hover:text-slate-300 transition-colors" href="/legal-context">
               {t("footer.legalContext")}

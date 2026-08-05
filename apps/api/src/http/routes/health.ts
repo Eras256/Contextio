@@ -17,7 +17,7 @@ export function healthRouter(): Router {
       endpoints: {
         health: "/healthz",
         readiness: "/readyz",
-        legalContext: "/.well-known/legal-context.json",
+        legalContext: "/.well-known/contextio-legal-context.json",
         api: "/api/v1",
       },
     });

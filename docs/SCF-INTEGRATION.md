@@ -28,7 +28,7 @@ How Contextio aligns with Stellar Community Fund **Integration Track** expectati
 - Architecture overview → [ARCHITECTURE.md](ARCHITECTURE.md) and the web Overview diagram.
 - API surface → [apps/api/README.md](../apps/api/README.md).
 - Smart contract interfaces → [contracts/README.md](../contracts/README.md).
-- LCP document (live) → `/.well-known/legal-context.json` (served by the API).
+- LCP document (live) → `/.well-known/contextio-legal-context.json` (served by the API).
 - LCP implementation → [packages/shared/src/lcp](../packages/shared/src/lcp).
 - Customer discovery → [customer-discovery.md](customer-discovery.md) (to be filled in).
 

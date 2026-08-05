@@ -66,14 +66,20 @@ export function legalRouter(): Router {
 }
 
 /**
- * Serves `https://{tenant-domain}/.well-known/legal-context.json`. In this
+ * Serves `https://{tenant-domain}/.well-known/contextio-legal-context.json`. In this
  * platform we resolve the tenant by the Host header (or `?domain=` for local
  * testing) — in production each tenant maps this path on their own domain.
+ *
+ * Deliberately NOT served at `/.well-known/legal-context.json` — that path
+ * is reserved by the AAA/Integra Ledger/SDF "Legal Context Protocol" open
+ * standard (legalcontextprotocol.org, launched June 2026). Our document
+ * predates that standard and uses an unrelated schema; serving it at the
+ * same well-known path would collide with a real, SDF-co-founded standard.
  */
 export function wellKnownRouter(): Router {
   const router = Router();
 
-  router.get("/legal-context.json", async (req, res, next) => {
+  router.get("/contextio-legal-context.json", async (req, res, next) => {
     try {
       const domain =
         (req.query.domain as string | undefined) ?? req.hostname ?? req.header("host") ?? "";

@@ -64,8 +64,15 @@ export function verifyBinding(context: LegalContext, binding: LcpBinding): boole
   );
 }
 
-/** Canonical `.well-known` path for a tenant's legal context document. */
-export const LCP_WELL_KNOWN_PATH = "/.well-known/legal-context.json";
+/**
+ * Canonical `.well-known` path for a tenant's legal context document.
+ * Deliberately NOT `/.well-known/legal-context.json` — that path is reserved
+ * by the AAA/Integra Ledger/SDF "Legal Context Protocol" open standard
+ * (legalcontextprotocol.org, launched June 2026), which uses an unrelated
+ * schema. Contextio's document predates that standard and isn't an
+ * implementation of it; kept off its reserved path to avoid the collision.
+ */
+export const LCP_WELL_KNOWN_PATH = "/.well-known/contextio-legal-context.json";
 
 export function legalContextUrl(tenantDomain: string): string {
   return `https://${tenantDomain}${LCP_WELL_KNOWN_PATH}`;

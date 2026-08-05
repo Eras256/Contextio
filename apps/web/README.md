@@ -29,7 +29,7 @@ pnpm --filter @contextio/web test:e2e   # Playwright (starts dev server)
 
 ## Notes
 
-- `/.well-known/legal-context.json` links point at the API in a connected
+- `/.well-known/contextio-legal-context.json` links point at the API in a connected
   deployment; in production each tenant maps this path on their own domain.
 - Accessibility: semantic landmarks, focus rings, color-contrast-aware palette,
   responsive nav with a mobile section scroller.

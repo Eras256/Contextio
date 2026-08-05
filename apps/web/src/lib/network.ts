@@ -9,7 +9,7 @@ export { NETWORK_COOKIE, type StellarNetwork };
  * Runtime network switch (testnet/mainnet) for a single deployment — one site,
  * not one deployment per network. State lives in a cookie (not localStorage)
  * so both client components and the one server route handler that needs it
- * (.well-known/legal-context.json/route.ts) agree on the same value.
+ * (.well-known/contextio-legal-context.json/route.ts) agree on the same value.
  *
  * Switching networks reloads the page: the Stellar Wallets Kit is a
  * module-level singleton initialized with a fixed passphrase (see wallet.ts),

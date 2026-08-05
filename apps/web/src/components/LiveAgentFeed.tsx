@@ -302,7 +302,7 @@ export function LiveAgentFeed() {
                   {/* LCP Hash badge */}
                   {d.legalContextHash && (
                     <a
-                      href={`${API}/.well-known/legal-context.json?domain=contextio.xyz`}
+                      href={`${API}/.well-known/contextio-legal-context.json?domain=contextio.xyz`}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-teal-500/20 bg-teal-950/20 text-teal-400 hover:bg-teal-900/40 hover:border-teal-500/40 transition hover:underline active:scale-95"

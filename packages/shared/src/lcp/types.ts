@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /**
  * Legal Context Protocol (LCP) — types for the document served at
- * `https://{tenant-domain}/.well-known/legal-context.json`.
+ * `https://{tenant-domain}/.well-known/contextio-legal-context.json`.
  *
  * The document gives AI agents and counterparties a machine-readable, verifiable
  * statement of the terms, consent requirements, jurisdiction, and dispute
@@ -84,7 +84,7 @@ export type LcpParty = z.infer<typeof lcpPartySchema>;
 export interface LcpBinding {
   contextId: string;
   version: number;
-  /** SHA-256 hex of the canonical legal-context.json at this version. */
+  /** SHA-256 hex of the canonical contextio-legal-context.json at this version. */
   hash: string;
   /** Consent requirement ids satisfied for this action. */
   consents: string[];

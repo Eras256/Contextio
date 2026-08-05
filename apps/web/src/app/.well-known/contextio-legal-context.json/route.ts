@@ -3,8 +3,14 @@ import { cookies } from "next/headers";
 import { NETWORK_COOKIE, type StellarNetwork } from "@/lib/network-shared";
 
 /**
- * Canonical LCP document for this tenant domain. The Legal Context Protocol
- * hashes the document served here, so it MUST be the real, published document
+ * Canonical LCP document for this tenant domain — Contextio's own agent-
+ * consent/audit-binding mechanism, named "Legal Context Protocol" internally
+ * since long before we knew of the AAA/Integra Ledger/SDF open standard of
+ * the same name (launched June 2026, `.well-known/legal-context.json`, see
+ * legalcontextprotocol.org). Ours has a different schema and is NOT an
+ * implementation of that standard — served at this Contextio-specific path
+ * (not the reserved one) precisely to avoid that collision. This document
+ * hashes to what's bound on-chain, so it MUST be the real, published document
  * (with the real terms hash) — we proxy it from the API rather than serving a
  * static placeholder, guaranteeing it matches what's bound on-chain.
  *
@@ -29,7 +35,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const r = await fetch(`${API}/.well-known/legal-context.json?domain=contextio.xyz`, {
+    const r = await fetch(`${API}/.well-known/contextio-legal-context.json?domain=contextio.xyz`, {
       cache: "no-store",
     });
     if (r.ok) {

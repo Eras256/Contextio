@@ -213,7 +213,7 @@ export default function DocsPage() {
               <div className="rounded-xl border border-white/5 bg-white/[0.01] p-5 space-y-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="rounded bg-sky-500/10 border border-sky-500/30 px-2 py-0.5 font-mono text-xs font-bold text-sky-400 uppercase">GET</span>
-                  <span className="font-mono text-sm text-white break-all">/.well-known/legal-context.json</span>
+                  <span className="font-mono text-sm text-white break-all">/.well-known/contextio-legal-context.json</span>
                 </div>
                 <p className="text-xs text-slate-400">Serves the public machine-readable Legal Context Protocol (LCP) manifest containing signed terms hash, provider email, allowed scopes, and dispute forums.</p>
               </div>
@@ -323,11 +323,11 @@ console.log("Onchain tx hash:", result.txHash);`}</pre>
                 </a>
                 <a
                   className="btn-ghost text-xs px-4 py-2"
-                  href="/.well-known/legal-context.json"
+                  href="/.well-known/contextio-legal-context.json"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Raw legal-context.json ↗
+                  Raw contextio-legal-context.json ↗
                 </a>
               </div>
             </Card>

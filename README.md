@@ -88,7 +88,7 @@ via **JWKS** (ES256) for forward compatibility.
 ## The Legal Context Protocol (LCP)
 
 Each tenant publishes a machine-readable terms document at
-`https://{tenant-domain}/.well-known/legal-context.json` (terms, jurisdiction,
+`https://{tenant-domain}/.well-known/contextio-legal-context.json` (terms, jurisdiction,
 consent requirements, dispute channels, authorized settlement networks/assets).
 The platform computes a **canonical SHA-256** of that document and binds the
 hash into every agentic Stellar transaction (treasury flow / payroll run) and

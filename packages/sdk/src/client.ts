@@ -86,10 +86,10 @@ export class ContextioClient {
     return this.request("/legal");
   }
 
-  /** Fetch a tenant's public legal-context.json (served at the API mirror). */
+  /** Fetch a tenant's public contextio-legal-context.json (served at the API mirror). */
   async wellKnownLegalContext(domain: string): Promise<LegalContext> {
     const res = await this.fetchImpl(
-      `${this.baseUrl}/.well-known/legal-context.json?domain=${encodeURIComponent(domain)}`,
+      `${this.baseUrl}/.well-known/contextio-legal-context.json?domain=${encodeURIComponent(domain)}`,
       { headers: { accept: "application/json" } },
     );
     if (!res.ok) throw new ContextioApiError(res.status, `.well-known -> ${res.status}`);

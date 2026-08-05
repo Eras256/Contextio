@@ -77,7 +77,7 @@ export function OnchainProof() {
         <div className="flex items-center justify-between gap-3 border-t border-white/5 pt-2">
           <span className="text-slate-500">{t("onchain.terms")}</span>
           <a
-            href={`${apiBaseUrl()}/.well-known/legal-context.json?domain=contextio.xyz`}
+            href={`${apiBaseUrl()}/.well-known/contextio-legal-context.json?domain=contextio.xyz`}
             target="_blank"
             rel="noreferrer"
             className="font-mono text-accent hover:underline"

@@ -42,7 +42,14 @@ export function verifyLegalContext(context: LegalContext, expectedHash: string):
   return hashLegalContext(context).toLowerCase() === expectedHash.toLowerCase();
 }
 
-export const LCP_WELL_KNOWN_PATH = "/.well-known/legal-context.json";
+/**
+ * Contextio's own document, at Contextio's own path — NOT the reserved
+ * `/.well-known/legal-context.json` from the AAA/Integra Ledger/SDF "Legal
+ * Context Protocol" open standard (legalcontextprotocol.org, June 2026),
+ * which uses an unrelated schema. Named "LCP" internally since before that
+ * standard existed; kept off its reserved path to avoid the collision.
+ */
+export const LCP_WELL_KNOWN_PATH = "/.well-known/contextio-legal-context.json";
 
 export function legalContextUrl(tenantDomain: string): string {
   return `https://${tenantDomain}${LCP_WELL_KNOWN_PATH}`;

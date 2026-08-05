@@ -63,7 +63,7 @@ export default function LegalContextPage() {
   // Load the REAL published LCP (with the real terms hash) from the canonical endpoint.
   useEffect(() => {
     let alive = true;
-    fetch(`${API}/.well-known/legal-context.json?domain=contextio.xyz`, { cache: "no-store" })
+    fetch(`${API}/.well-known/contextio-legal-context.json?domain=contextio.xyz`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!alive || !d) return;
@@ -95,7 +95,7 @@ export default function LegalContextPage() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(doc, null, 2));
     const downloadAnchor = document.createElement("a");
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "legal-context.json");
+    downloadAnchor.setAttribute("download", "contextio-legal-context.json");
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
