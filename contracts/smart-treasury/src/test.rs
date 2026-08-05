@@ -14,7 +14,14 @@ fn deploy(e: &Env, agent: &Address, token: &Address, limit: i128, period_ledgers
     let policy_contract = e.register(SpendingLimitPolicyContract, ());
     let account = e.register(
         SmartTreasuryContract,
-        (agent.clone(), token.clone(), policy_contract.clone(), limit, period_ledgers),
+        (
+            agent.clone(),
+            vec![e, token.clone()],           // capped_targets
+            soroban_sdk::Vec::<Address>::new(e), // gateway_targets
+            policy_contract.clone(),
+            limit,
+            period_ledgers,
+        ),
     );
     (account, policy_contract, 0)
 }
@@ -36,6 +43,83 @@ fn constructor_wires_one_signer_and_the_spending_limit_policy() {
     assert_eq!(rule.policies.len(), 1);
     assert_eq!(rule.policies.get(0).unwrap(), policy_contract);
     assert_eq!(rule.context_type, ContextRuleType::CallContract(token));
+}
+
+#[test]
+fn constructor_wires_capped_targets_before_gateway_targets() {
+    let e = Env::default();
+    e.mock_all_auths();
+
+    let agent = Address::generate(&e);
+    let usdc = Address::generate(&e);
+    let blend_asset = Address::generate(&e);
+    let blend_pool = Address::generate(&e);
+    let policy_contract = e.register(SpendingLimitPolicyContract, ());
+    let account = e.register(
+        SmartTreasuryContract,
+        (
+            agent.clone(),
+            vec![&e, usdc.clone(), blend_asset.clone()], // capped_targets: rules 0, 1
+            vec![&e, blend_pool.clone()],                // gateway_targets: rule 2
+            policy_contract.clone(),
+            100_0000000i128,
+            17_280u32,
+        ),
+    );
+
+    let client = crate::SmartTreasuryContractClient::new(&e, &account);
+    assert_eq!(client.get_context_rules_count(), 3);
+
+    let rule0 = client.get_context_rule(&0);
+    assert_eq!(rule0.context_type, ContextRuleType::CallContract(usdc));
+    assert_eq!(rule0.policies.len(), 1);
+    assert!(rule0.signers.contains(&Signer::Delegated(agent.clone())));
+
+    let rule1 = client.get_context_rule(&1);
+    assert_eq!(rule1.context_type, ContextRuleType::CallContract(blend_asset));
+    assert_eq!(rule1.policies.len(), 1);
+
+    // Gateway rule: signer-gated only, deliberately NO policy attached — the
+    // cap lives on the nested asset-level rule (rule 1), not here, or the
+    // same real spend gets double-recorded (found and fixed 2026-08-04).
+    let rule2 = client.get_context_rule(&2);
+    assert_eq!(rule2.context_type, ContextRuleType::CallContract(blend_pool));
+    assert_eq!(rule2.policies.len(), 0);
+    assert!(rule2.signers.contains(&Signer::Delegated(agent.clone())));
+
+    // Independent spending buckets: rule 0 and rule 1 must not share state.
+    let policy_client =
+        contexta_spending_limit_policy::SpendingLimitPolicyContractClient::new(&e, &policy_contract);
+    let data0 = policy_client.get_spending_limit_data(&0, &account);
+    let data1 = policy_client.get_spending_limit_data(&1, &account);
+    assert_eq!(data0.cached_total_spent, 0);
+    assert_eq!(data1.cached_total_spent, 0);
+}
+
+#[test]
+fn gateway_rule_with_no_policy_only_requires_the_signer() {
+    let e = Env::default();
+    e.mock_all_auths();
+
+    let agent = Address::generate(&e);
+    let blend_pool = Address::generate(&e);
+    let policy_contract = e.register(SpendingLimitPolicyContract, ());
+    let account = e.register(
+        SmartTreasuryContract,
+        (
+            agent.clone(),
+            soroban_sdk::Vec::<Address>::new(&e), // capped_targets: none
+            vec![&e, blend_pool.clone()],         // gateway_targets: rule 0
+            policy_contract,
+            100_0000000i128,
+            17_280u32,
+        ),
+    );
+
+    let client = crate::SmartTreasuryContractClient::new(&e, &account);
+    let rule = client.get_context_rule(&0);
+    assert_eq!(rule.policies.len(), 0);
+    assert_eq!(rule.signers.len(), 1);
 }
 
 #[test]

@@ -1,7 +1,10 @@
 import {
   Address,
   Asset,
+  authorizeInvocation,
+  buildAuthorizationEntryPreimage,
   Contract,
+  hash,
   Horizon,
   Keypair,
   nativeToScVal,
@@ -101,6 +104,196 @@ export class StellarClient {
       throw new Error(`Transaction ${sent.hash} did not succeed: ${confirmed.status}`);
     }
 
+    return {
+      txHash: sent.hash,
+      returnValue: confirmed.returnValue ? scValToNative(confirmed.returnValue) : null,
+      ledger: confirmed.ledger,
+    };
+  }
+
+  /**
+   * Invoke a contract method THROUGH an OpenZeppelin Stellar Smart Account
+   * (`stellar-accounts` v0.7.1) that gates the call behind a spending-limit
+   * policy, instead of signing directly with a raw hot key.
+   *
+   * Calls the TARGET contract directly (e.g. `usdc.transfer(smartAccount, to,
+   * amount)`) — NOT wrapped in the crate's generic `ExecutionEntryPoint::
+   * execute()` helper. `execute()`'s own top-level `require_auth()` always
+   * produces a self-referential `Context{contract: <the smart account
+   * itself>, fn_name: "execute"}`, which can never match a
+   * `ContextRuleType::CallContract(target)`-scoped rule or a policy that
+   * inspects `fn_name`/`args` (like `spending_limit`, which only recognizes
+   * `fn_name == "transfer"`) — verified empirically against the real deployed
+   * contract on testnet (2026-08-04). Calling the target directly makes the
+   * SAME `require_auth()` (triggered from inside the target's own token/pool
+   * logic) produce `Context{contract: target, fn_name: <real method>, args}`,
+   * which is what context rules and policies are actually designed to match.
+   *
+   * Soroban's `simulateTransaction` recording mode never executes a custom
+   * account's `__check_auth` body, so it can discover the smart account's OWN
+   * top-level auth entry but never the NESTED `Signer::Delegated` entry
+   * `__check_auth` requires further down — that entry must be hand-built and
+   * signed, per OpenZeppelin's documented flow (see "Signers and Verifiers" →
+   * "Transaction Simulation Behavior" at
+   * https://docs.openzeppelin.com/stellar-contracts/accounts/signers-and-verifiers).
+   * The full 2-entry flow below (attach a hand-built `AuthPayload` to the
+   * smart account's entry, then derive + sign the delegated signer's
+   * `__check_auth` entry) was verified end-to-end via simulation-only against
+   * the real deployed smart account before this method was ever used for a
+   * real submission.
+   *
+   * Scope: a call can trigger MORE than one auth context for the same smart
+   * account address — verified empirically on a real Blend `submit()` Supply
+   * call, whose recorded invocation tree is `submit(...)` with the reserve
+   * token's `transfer(...)` as a subInvocation, and both show up as separate
+   * entries in `__check_auth`'s `auth_contexts`, each needing its own
+   * `context_rule_ids[i]` (bound into the signed digest — see
+   * `do_check_auth` in `stellar-accounts`' `storage.rs`). Recording-mode
+   * simulation DOES walk the real invocation tree (only auth checks are
+   * short-circuited, not execution), so the full set of contexts — and which
+   * contract each one belongs to — can be read off the ONE recording pass by
+   * flattening `rootInvocation` + its `subInvocations` in order; that order
+   * matches `auth_contexts`' order exactly (verified against a real
+   * `__check_auth` diagnostic event). `contextRuleIdByTarget` maps each
+   * contract address that can appear in that tree to the rule id scoped to
+   * it; a node whose contract isn't in the map throws rather than guessing.
+   */
+  async invokeViaSmartAccount(params: {
+    /** The smart account contract address gating this call. */
+    smartAccountId: string;
+    /** The contract being called directly (e.g. a token SAC or Blend pool). */
+    targetContractId: string;
+    method: string;
+    args: xdr.ScVal[];
+    /**
+     * Contract address → context rule id, covering every contract that may
+     * appear in the call's auth tree (the direct target, plus any nested
+     * contract the target itself calls that also needs the smart account's
+     * auth — e.g. Blend's reserve token during a Supply).
+     */
+    contextRuleIdByTarget: Record<string, number>;
+    /** Secret seed of the `Signer::Delegated` address authorizing this rule. */
+    delegatedSignerSecret: string;
+    /** Secret seed of the classic account paying the transaction fee. */
+    feeSourceSecret: string;
+    fee?: string;
+    timeoutMs?: number;
+  }): Promise<InvokeResult> {
+    const delegatedSigner = Keypair.fromSecret(params.delegatedSignerSecret);
+    const feeSource = Keypair.fromSecret(params.feeSourceSecret);
+    const account = await this.server.getAccount(feeSource.publicKey());
+    const target = new Contract(params.targetContractId);
+
+    const recordingTx = new TransactionBuilder(account, {
+      fee: params.fee ?? (Number(BASE_FEE) * 100).toString(),
+      networkPassphrase: this.config.networkPassphrase,
+    })
+      .addOperation(target.call(params.method, ...params.args))
+      .setTimeout(180)
+      .build();
+
+    const recordingSim = await this.server.simulateTransaction(recordingTx);
+    if (rpc.Api.isSimulationError(recordingSim)) {
+      throw new Error(`Smart-account call simulation failed: ${recordingSim.error}`);
+    }
+    const authEntries = recordingSim.result?.auth ?? [];
+    const smartAccountEntry = authEntries.find(
+      (entry) =>
+        entry.credentials().switch().name === "sorobanCredentialsAddress" &&
+        Address.fromScAddress(entry.credentials().address().address()).toString() === params.smartAccountId,
+    );
+    if (!smartAccountEntry) {
+      throw new Error(
+        `No auth entry recorded for smart account ${params.smartAccountId} — is it actually the ` +
+          `authorizer for ${params.targetContractId}.${params.method}?`,
+      );
+    }
+
+    // Flatten root + subInvocations, in order, to one rule id per node.
+    const contextRuleIds: number[] = [];
+    const walk = (inv: xdr.SorobanAuthorizedInvocation) => {
+      const fn = inv.function();
+      if (fn.switch().name === "sorobanAuthorizedFunctionTypeContractFn") {
+        const contractId = Address.fromScAddress(fn.contractFn().contractAddress()).toString();
+        const ruleId = params.contextRuleIdByTarget[contractId];
+        if (ruleId === undefined) {
+          throw new Error(
+            `invokeViaSmartAccount: no context rule configured for ${contractId} — the call's auth ` +
+              `tree includes a contract not covered by contextRuleIdByTarget.`,
+          );
+        }
+        contextRuleIds.push(ruleId);
+      }
+      inv.subInvocations().forEach(walk);
+    };
+    walk(smartAccountEntry.rootInvocation());
+
+    const latest = await this.server.getLatestLedger();
+    const validUntilLedger = latest.sequence + 100;
+    const addressCreds = smartAccountEntry.credentials().address();
+    addressCreds.signatureExpirationLedger(validUntilLedger);
+    addressCreds.signature(buildAuthPayloadScVal(delegatedSigner.publicKey(), contextRuleIds));
+
+    // signature_payload: the raw preimage hash the host passes to __check_auth.
+    const preimage = buildAuthorizationEntryPreimage(smartAccountEntry, validUntilLedger, this.config.networkPassphrase);
+    const signaturePayload = hash(preimage.toXDR());
+    // auth_digest = sha256(signature_payload || context_rule_ids.to_xdr()) — must
+    // mirror stellar-accounts' `do_check_auth` exactly (storage.rs) since the
+    // delegated signer authorizes THIS digest, not the raw signature_payload.
+    const ruleIdsXdr = xdr.ScVal.scvVec(contextRuleIds.map((id) => xdr.ScVal.scvU32(id))).toXDR();
+    const authDigest = hash(Buffer.concat([signaturePayload, ruleIdsXdr]));
+
+    const checkAuthInvocation = new xdr.SorobanAuthorizedInvocation({
+      function: xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(
+        new xdr.InvokeContractArgs({
+          contractAddress: Address.fromString(params.smartAccountId).toScAddress(),
+          functionName: "__check_auth",
+          args: [xdr.ScVal.scvBytes(authDigest)],
+        }),
+      ),
+      subInvocations: [],
+    });
+    const delegatedEntry = await authorizeInvocation({
+      signer: delegatedSigner,
+      validUntilLedgerSeq: validUntilLedger,
+      invocation: checkAuthInvocation,
+      networkPassphrase: this.config.networkPassphrase,
+      publicKey: delegatedSigner.publicKey(),
+    });
+
+    const rawOp = recordingTx.operations[0] as unknown as { func: xdr.HostFunction };
+    const authorizedOp = Operation.invokeHostFunction({
+      func: rawOp.func,
+      auth: [smartAccountEntry, delegatedEntry],
+    });
+    // Re-fetch the source account: `recordingTx`'s own `.build()` already
+    // bumped `account`'s in-memory sequence number as a side effect even
+    // though that tx was only simulated, never submitted — reusing it here
+    // would submit with the wrong (too-high) sequence number (`txBadSeq`).
+    const freshAccount = await this.server.getAccount(feeSource.publicKey());
+    const authorizedTx = new TransactionBuilder(freshAccount, {
+      fee: params.fee ?? (Number(BASE_FEE) * 100).toString(),
+      networkPassphrase: this.config.networkPassphrase,
+    })
+      .addOperation(authorizedOp)
+      .setTimeout(180)
+      .build();
+
+    const finalSim = await this.server.simulateTransaction(authorizedTx);
+    if (rpc.Api.isSimulationError(finalSim)) {
+      throw new Error(`Smart-account authorized call failed simulation: ${finalSim.error}`);
+    }
+    const prepared = rpc.assembleTransaction(authorizedTx, finalSim).build();
+    prepared.sign(feeSource);
+
+    const sent = await this.server.sendTransaction(prepared);
+    if (sent.status === "ERROR") {
+      throw new Error(`Stellar submission failed: ${JSON.stringify(sent.errorResult)}`);
+    }
+    const confirmed = await this.pollTransaction(sent.hash, params.timeoutMs ?? 30_000);
+    if (confirmed.status !== "SUCCESS") {
+      throw new Error(`Transaction ${sent.hash} did not succeed: ${confirmed.status}`);
+    }
     return {
       txHash: sent.hash,
       returnValue: confirmed.returnValue ? scValToNative(confirmed.returnValue) : null,
@@ -356,6 +549,33 @@ export class StellarClient {
 }
 
 export { xdr, nativeToScVal, scValToNative, Address, Keypair };
+
+/**
+ * Build the `AuthPayload { signers: Map<Signer, Bytes>, context_rule_ids:
+ * Vec<u32> }` ScVal that `stellar-accounts`' `__check_auth` expects as a smart
+ * account's credentials signature — a single `Signer::Delegated(delegatedPk)`
+ * selecting `contextRuleIds` (one entry per auth context the call generates,
+ * in the same order `__check_auth` receives them — see
+ * `invokeViaSmartAccount`). Field order matters: `#[contracttype]` structs
+ * serialize fields alphabetically ("context_rule_ids" before "signers"), and
+ * `Signer::Delegated(Address)` serializes as `Vec[Symbol("Delegated"),
+ * address]`. The signer's `Bytes` value is unused by `authenticate()` for a
+ * `Delegated` signer (only `Signer::External` reads it) — kept empty.
+ */
+function buildAuthPayloadScVal(delegatedSignerPublicKey: string, contextRuleIds: number[]): xdr.ScVal {
+  const signerKey = xdr.ScVal.scvVec([
+    xdr.ScVal.scvSymbol("Delegated"),
+    Address.fromString(delegatedSignerPublicKey).toScVal(),
+  ]);
+  const signersMap = xdr.ScVal.scvMap([
+    new xdr.ScMapEntry({ key: signerKey, val: xdr.ScVal.scvBytes(Buffer.alloc(0)) }),
+  ]);
+  const ruleIds = xdr.ScVal.scvVec(contextRuleIds.map((id) => xdr.ScVal.scvU32(id)));
+  return xdr.ScVal.scvMap([
+    new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("context_rule_ids"), val: ruleIds }),
+    new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("signers"), val: signersMap }),
+  ]);
+}
 
 /**
  * Sign a base-64 transaction envelope XDR with a Stellar secret and return the

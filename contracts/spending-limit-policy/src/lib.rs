@@ -6,6 +6,20 @@
 //! accounts can reference this contract's address in their context rules.
 //! This is the piece that bounds `contexta-smart-treasury`'s agent signer to a
 //! rolling-window spending cap instead of unlimited authority.
+//!
+//! No custom translation logic here on purpose — see `contracts/smart-
+//! treasury`'s constructor doc comment for why. In short: a real Blend
+//! `submit()` Supply call, invoked directly (not wrapped in `execute()`),
+//! generates its OWN nested `transfer`-shaped auth context for the
+//! underlying reserve token — verified against the real deployed contract
+//! on testnet (2026-08-04) — so `spending_limit::enforce`'s stock
+//! `fn_name == "transfer"` check already matches it natively, as long as a
+//! context rule is scoped to that reserve token contract. An earlier version
+//! of this contract added a `translate_blend_submit` helper to re-express
+//! `submit()` itself as a synthetic transfer; removed after finding it
+//! double-recorded the same spend against two independent rule buckets
+//! (once via the translation, once via the real nested context) with no
+//! corresponding safety benefit.
 
 use soroban_sdk::{auth::Context, contract, contractimpl, Address, Env, Vec};
 use stellar_accounts::{
