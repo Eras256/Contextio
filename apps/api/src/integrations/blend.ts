@@ -23,6 +23,21 @@ export interface BlendConfig {
   networkPassphrase?: string;
   /** Platform Stellar secret that signs supply/withdraw transactions. */
   signerSecret?: string;
+  /**
+   * OpenZeppelin Stellar Smart Account gating Blend supply/withdraw
+   * (Milestone 1, see TECHNICAL.md §6) — when set, `submitRequest` routes
+   * through `StellarClient.invokeViaSmartAccount` instead of signing
+   * directly: `signerSecret`'s key becomes the `Signer::Delegated` that
+   * authorizes the call, bounded by the account's on-chain spending-limit
+   * policy, and the Blend POSITION itself is held by this address, not the
+   * signer's own classic account. Unset by default — the direct-signing
+   * path (unchanged) is what runs until this is explicitly configured.
+   */
+  smartAccountId?: string;
+  /** Context rule id on `smartAccountId` scoped to `asset` (carries the real cap). */
+  smartAccountAssetRuleId?: number;
+  /** Context rule id on `smartAccountId` scoped to `poolId` (signer-gate only). */
+  smartAccountPoolRuleId?: number;
 }
 
 /** UI-facing snapshot of the live Blend pool reserve + the platform's position. */
@@ -50,6 +65,11 @@ export class BlendClient {
       : null;
     if (this.mock) {
       this.logger.warn("BLEND_POOL_CONTRACT_ID not set — using in-memory Blend mock");
+    } else if (config.smartAccountId) {
+      this.logger.info(
+        { smartAccountId: config.smartAccountId },
+        "Blend supply/withdraw gated by smart account (Milestone 1) — not signing directly",
+      );
     } else if (!this.signerAddress) {
       this.logger.warn("Blend pool set but signer missing — writes disabled, reads only");
     }
@@ -65,6 +85,16 @@ export class BlendClient {
 
   get poolId(): string {
     return this.config.poolId ?? "blend_pool_main";
+  }
+
+  /**
+   * The address that actually HOLDS the Blend position — the smart account
+   * when Milestone 1 gating is configured (funds live under its own
+   * address, distinct from the signer's classic account), otherwise the
+   * signer's own classic address (today's direct-signing behavior).
+   */
+  private get positionHolderAddress(): string | null {
+    return this.config.smartAccountId ?? this.signerAddress;
   }
 
   private get assetId(): string {
@@ -155,9 +185,9 @@ export class BlendClient {
     if (!reserve) throw new Error(`Blend pool ${poolId} has no reserve for ${asset}`);
 
     let positionBaseUnits = "0";
-    if (this.signerAddress) {
+    if (this.positionHolderAddress) {
       try {
-        const user = await pool.loadUser(this.signerAddress);
+        const user = await pool.loadUser(this.positionHolderAddress);
         positionBaseUnits = user.getSupply(reserve).toString();
       } catch {
         /* user may have no position yet */
@@ -174,13 +204,34 @@ export class BlendClient {
     };
   }
 
-  /** Build the Blend pool `submit` op (SDK), sign it, and submit via Soroban RPC. */
+  /**
+   * Build the Blend pool `submit` op (SDK), sign it, and submit via Soroban
+   * RPC — either directly with the platform key, or, when Milestone 1's
+   * smart account is configured, through it instead (see
+   * `smartAccountId`/`submitRequestViaSmartAccount`).
+   */
   private async submitRequest(
     requestType: RequestType,
     asset: string,
     amountBaseUnits: string,
   ): Promise<BlendPosition & { txHash?: string }> {
     if (!this.canWrite) throw new Error("Blend writes disabled (missing pool/signer)");
+    const txHash = this.config.smartAccountId
+      ? await this.submitRequestViaSmartAccount(requestType, asset, amountBaseUnits, this.config.smartAccountId)
+      : await this.submitRequestDirect(requestType, asset, amountBaseUnits);
+
+    const pos = await this.getPosition(asset);
+    const base: BlendPosition = pos.ok
+      ? pos.value
+      : { poolId: this.poolId, asset, suppliedBaseUnits: "0", borrowedBaseUnits: "0", supplyApyBps: 0, borrowApyBps: 0 };
+    return { ...base, txHash };
+  }
+
+  private async submitRequestDirect(
+    requestType: RequestType,
+    asset: string,
+    amountBaseUnits: string,
+  ): Promise<string | undefined> {
     const addr = this.signerAddress as string;
     const opXdr = new PoolContractV2(this.config.poolId as string).submit({
       from: addr,
@@ -189,11 +240,55 @@ export class BlendClient {
       requests: [{ amount: BigInt(amountBaseUnits), request_type: requestType, address: asset }],
     });
     const res = await this.stellarClient.submitOperationXdr(opXdr, this.config.signerSecret as string);
-    const pos = await this.getPosition(asset);
-    const base: BlendPosition = pos.ok
-      ? pos.value
-      : { poolId: this.poolId, asset, suppliedBaseUnits: "0", borrowedBaseUnits: "0", supplyApyBps: 0, borrowApyBps: 0 };
-    return { ...base, txHash: res.txHash };
+    return res.txHash;
+  }
+
+  /**
+   * Same `submit()` call, but addressed to the smart account (`from`/
+   * `spender`/`to` are all the smart account's own address, since it — not
+   * the agent's classic key — is what holds and controls the position) and
+   * authorized via `invokeViaSmartAccount` instead of a direct signature.
+   * Reuses the Blend SDK's own operation-building (`PoolContractV2.submit`)
+   * for the `Request` encoding — just extracts its args rather than
+   * hand-building the struct — so the on-the-wire shape is exactly what
+   * Blend's SDK already knows is correct, not a hand-rolled duplicate.
+   *
+   * Requires two context rules on the smart account (verified end-to-end
+   * with real testnet transactions, 2026-08-04 — see TECHNICAL.md §6): one
+   * scoped to `asset` carrying the real spending cap (Blend's own internal
+   * transfer of the underlying reserve token surfaces as its own auth
+   * context), one scoped to `poolId` as a signer-only gateway (no cap there
+   * — attaching one too would double-count the same spend).
+   */
+  private async submitRequestViaSmartAccount(
+    requestType: RequestType,
+    asset: string,
+    amountBaseUnits: string,
+    smartAccountId: string,
+  ): Promise<string | undefined> {
+    const poolId = this.config.poolId as string;
+    const opXdr = new PoolContractV2(poolId).submit({
+      from: smartAccountId,
+      spender: smartAccountId,
+      to: smartAccountId,
+      requests: [{ amount: BigInt(amountBaseUnits), request_type: requestType, address: asset }],
+    });
+    const op = stellar.xdr.Operation.fromXDR(opXdr, "base64");
+    const args = op.body().invokeHostFunctionOp().hostFunction().invokeContract().args();
+
+    const res = await this.stellarClient.invokeViaSmartAccount({
+      smartAccountId,
+      targetContractId: poolId,
+      method: "submit",
+      args,
+      contextRuleIdByTarget: {
+        [asset]: this.config.smartAccountAssetRuleId ?? 1,
+        [poolId]: this.config.smartAccountPoolRuleId ?? 2,
+      },
+      delegatedSignerSecret: this.config.signerSecret as string,
+      feeSourceSecret: this.config.signerSecret as string,
+    });
+    return res.txHash;
   }
 
   /**

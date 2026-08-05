@@ -81,6 +81,10 @@ export function createContainer(): Container {
       // Sign Blend ops with the account that holds the (Blend)USDC — the agent
       // wallet — falling back to the platform service key for XLM-only setups.
       signerSecret: config.BLEND_SIGNER_SECRET || config.STELLAR_SERVICE_SECRET || undefined,
+      // Smart-account gating (Milestone 1) — unset by default, see env.ts.
+      smartAccountId: config.BLEND_SMART_ACCOUNT_ID || undefined,
+      smartAccountAssetRuleId: config.BLEND_SMART_ACCOUNT_ASSET_RULE_ID,
+      smartAccountPoolRuleId: config.BLEND_SMART_ACCOUNT_POOL_RULE_ID,
     },
     stellarClient,
     logger,

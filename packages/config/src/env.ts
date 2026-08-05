@@ -92,6 +92,20 @@ export const serverEnvSchema = baseEnvSchema.extend({
   // USDC lending it must be the account that actually holds the BlendUSDC (the
   // agent wallet), so this overrides the signer for the Blend client only.
   BLEND_SIGNER_SECRET: z.string().optional().or(z.literal("")),
+  /**
+   * OpenZeppelin Stellar Smart Account gating Blend supply/withdraw (Milestone
+   * 1, see TECHNICAL.md §6) — `BLEND_SIGNER_SECRET`'s key becomes a
+   * `Signer::Delegated` bounded by an on-chain spending-limit policy instead
+   * of signing directly. Unset by default: BlendClient falls back to the
+   * existing direct-signing path until this is explicitly configured, so
+   * setting it is the one deliberate switch that changes the live agent's
+   * signing behavior.
+   */
+  BLEND_SMART_ACCOUNT_ID: z.string().optional().or(z.literal("")),
+  /** Context rule id on `BLEND_SMART_ACCOUNT_ID` scoped to `BLEND_ASSET_ID` (carries the real spending cap). */
+  BLEND_SMART_ACCOUNT_ASSET_RULE_ID: z.coerce.number().int().default(1),
+  /** Context rule id on `BLEND_SMART_ACCOUNT_ID` scoped to `BLEND_POOL_CONTRACT_ID` (signer-gate only). */
+  BLEND_SMART_ACCOUNT_POOL_RULE_ID: z.coerce.number().int().default(2),
 
   FX_PROVIDER: z.enum(["mock", "http"]).default("mock"),
   FX_API_URL: z.string().url().optional().or(z.literal("")),
