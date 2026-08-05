@@ -245,6 +245,21 @@ export function publicRouter(): Router {
   });
 
   /**
+   * Public, read-only status of the BlindPay off-ramp integration (Milestone
+   * 2, licensed-partner side — see TECHNICAL.md §6). No secrets exposed,
+   * just whether a real sandbox/production instance is configured yet.
+   */
+  router.get("/blindpay", (req, res) => {
+    const blindpay = req.container.blindpay;
+    res.setHeader("cache-control", "public, max-age=30");
+    res.json({
+      live: blindpay.enabled,
+      provider: "blindpay",
+      network: env().STELLAR_NETWORK,
+    });
+  });
+
+  /**
    * Start a REAL SEP-24 off-ramp on testnet: SEP-10 auth (challenge → sign →
    * JWT) + SEP-24 interactive withdraw → the anchor's hosted off-ramp URL. This
    * is the genuine mechanism that settles to PIX/Bre-B via a licensed anchor in

@@ -8,6 +8,7 @@ import { AiAdvisor } from "./integrations/ai.js";
 import { AnchorClient } from "./integrations/anchor.js";
 import { SorobanGateway } from "./integrations/soroban.js";
 import { RelayerClient } from "./integrations/relayer.js";
+import { BlindPayClient } from "./integrations/blindpay.js";
 import { createOracle, type Oracle } from "./integrations/oracle.js";
 import { ReflectorClient } from "./integrations/reflector.js";
 import { AuditService } from "./services/auditService.js";
@@ -30,6 +31,7 @@ export interface Container {
   blend: BlendClient;
   soroban: SorobanGateway;
   relayer: RelayerClient;
+  blindpay: BlindPayClient;
   oracle: Oracle;
   reflector: ReflectorClient;
   ai: AiAdvisor;
@@ -94,6 +96,16 @@ export function createContainer(): Container {
   // enable on mainnet without touching the boot guard. Unset by default.
   const relayer = new RelayerClient(
     { apiKey: config.OZ_CHANNELS_API_KEY || undefined, baseUrl: config.OZ_CHANNELS_BASE_URL },
+    logger,
+  );
+  // Off-ramp settlement (Milestone 2, licensed-partner side) — unset by
+  // default, see env.ts. No key of ours is needed for this to be inert.
+  const blindpay = new BlindPayClient(
+    {
+      apiUrl: config.BLINDPAY_API_URL,
+      apiKey: config.BLINDPAY_API_KEY || undefined,
+      instanceId: config.BLINDPAY_INSTANCE_ID || undefined,
+    },
     logger,
   );
   const soroban = new SorobanGateway(
@@ -166,6 +178,7 @@ export function createContainer(): Container {
     blend,
     soroban,
     relayer,
+    blindpay,
     oracle,
     reflector,
     ai,

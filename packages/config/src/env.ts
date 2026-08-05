@@ -107,6 +107,17 @@ export const serverEnvSchema = baseEnvSchema.extend({
   /** Context rule id on `BLEND_SMART_ACCOUNT_ID` scoped to `BLEND_POOL_CONTRACT_ID` (signer-gate only). */
   BLEND_SMART_ACCOUNT_POOL_RULE_ID: z.coerce.number().int().default(2),
 
+  /**
+   * BlindPay off-ramp settlement (Milestone 2, licensed-partner side — see
+   * TECHNICAL.md §6). Unset by default: `BlindPayClient.enabled` is false
+   * until both are set. Get a free `development` instance immediately at
+   * https://app.blindpay.com/sign-up — no paid plan or business
+   * verification required to start sandbox integration.
+   */
+  BLINDPAY_API_URL: z.string().default("https://api.blindpay.com/v1"),
+  BLINDPAY_API_KEY: z.string().optional().or(z.literal("")),
+  BLINDPAY_INSTANCE_ID: z.string().optional().or(z.literal("")),
+
   FX_PROVIDER: z.enum(["mock", "http"]).default("mock"),
   FX_API_URL: z.string().url().optional().or(z.literal("")),
   FX_API_KEY: z.string().optional().or(z.literal("")),
