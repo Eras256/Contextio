@@ -63,7 +63,7 @@ const en: Dict = {
     modalTestnetSafe: "Testnet stays a free, no-risk demo — switch back anytime.",
     modalCancel: "Stay on Testnet",
     modalConfirm: "Switch to Mainnet",
-    geoBlocked: "Mainnet isn't available from your region yet — switched back to Testnet. Live in Brazil, Argentina, or Colombia? Reconnecting from there will work.",
+    geoBlocked: "Mainnet self-custody isn't available yet from the EU/EEA, the United States, or China — switched back to Testnet. Everywhere else works normally.",
   },
   disclaimer: {
     banner:
@@ -272,6 +272,8 @@ const en: Dict = {
       earning: "Earning",
       posTitle: "Where your money is",
       posEmpty: "No balances yet.",
+      moveTermsLabel: "I accept the terms for this move.",
+      moveJurisdictionLabel: "I confirm I am not located in, and not a resident of, the European Union/EEA, the United States, or China.",
       colAsset: "Asset",
       colWhere: "Where",
       colYield: "Yield",
@@ -327,6 +329,7 @@ const en: Dict = {
       payoutsMainnetNote: "Mainnet is invite-only right now. Your treasury wallet needs a USDC trustline and balance to pay out.",
       payoutsContractorLabel: "I confirm these recipients are independent contractors under a commercial contract, not subordinate employees.",
       payoutsTermsLabel: "I accept the terms for this payout.",
+      payoutsJurisdictionLabel: "I confirm I am not located in, and not a resident of, the European Union/EEA, the United States, or China.",
       payoutsRun: "Run Payout",
       payoutsConnectFirst: "Connect a wallet first.",
       payoutsCheckBoxes: "Check both boxes to continue.",
@@ -533,7 +536,7 @@ const es: Dict = {
     modalTestnetSafe: "Testnet sigue siendo una demo gratis, sin riesgo — puedes volver cuando quieras.",
     modalCancel: "Quedarme en Testnet",
     modalConfirm: "Cambiar a Mainnet",
-    geoBlocked: "Mainnet todavía no está disponible desde tu región — volvimos a Testnet. ¿Estás en Brasil, Argentina o Colombia? Desde ahí sí funciona.",
+    geoBlocked: "La auto-custodia en Mainnet todavía no está disponible desde la UE/EEE, Estados Unidos o China — volvimos a Testnet. Desde cualquier otro lugar funciona normal.",
   },
   disclaimer: {
     banner:
@@ -742,6 +745,8 @@ const es: Dict = {
       earning: "Rindiendo",
       posTitle: "Dónde está tu dinero",
       posEmpty: "Aún no hay saldos.",
+      moveTermsLabel: "Acepto los términos para este movimiento.",
+      moveJurisdictionLabel: "Confirmo que no estoy ubicado, ni soy residente, en la Unión Europea/EEE, Estados Unidos o China.",
       colAsset: "Activo",
       colWhere: "Dónde",
       colYield: "Rinde",
@@ -797,6 +802,7 @@ const es: Dict = {
       payoutsMainnetNote: "Mainnet es por invitación por ahora. Tu wallet de tesorería necesita trustline de USDC y saldo para pagar.",
       payoutsContractorLabel: "Confirmo que estos destinatarios son contractors independientes bajo un contrato comercial, no empleados subordinados.",
       payoutsTermsLabel: "Acepto los términos para este pago.",
+      payoutsJurisdictionLabel: "Confirmo que no estoy ubicado, ni soy residente, en la Unión Europea/EEE, Estados Unidos o China.",
       payoutsRun: "Ejecutar Payout",
       payoutsConnectFirst: "Conecta una wallet primero.",
       payoutsCheckBoxes: "Marca las dos casillas para continuar.",
@@ -1003,7 +1009,7 @@ const pt: Dict = {
     modalTestnetSafe: "Testnet continua sendo uma demo gratuita, sem risco — volte quando quiser.",
     modalCancel: "Ficar na Testnet",
     modalConfirm: "Mudar para Mainnet",
-    geoBlocked: "A Mainnet ainda não está disponível na sua região — voltamos para Testnet. Está no Brasil, Argentina ou Colômbia? De lá funciona normalmente.",
+    geoBlocked: "A autocustódia na Mainnet ainda não está disponível na UE/EEE, Estados Unidos ou China — voltamos para Testnet. De qualquer outro lugar funciona normalmente.",
   },
   disclaimer: {
     banner:
@@ -1212,6 +1218,8 @@ const pt: Dict = {
       earning: "Rendendo",
       posTitle: "Onde está seu dinheiro",
       posEmpty: "Ainda não há saldos.",
+      moveTermsLabel: "Aceito os termos para esta movimentação.",
+      moveJurisdictionLabel: "Confirmo que não estou localizado, nem sou residente, na União Europeia/EEE, Estados Unidos ou China.",
       colAsset: "Ativo",
       colWhere: "Onde",
       colYield: "Rende",
@@ -1267,6 +1275,7 @@ const pt: Dict = {
       payoutsMainnetNote: "Mainnet é somente convite por enquanto. Sua carteira de tesouraria precisa de trustline de USDC e saldo para pagar.",
       payoutsContractorLabel: "Confirmo que estes destinatários são contractors independentes sob contrato comercial, não funcionários subordinados.",
       payoutsTermsLabel: "Aceito os termos para este pagamento.",
+      payoutsJurisdictionLabel: "Confirmo que não estou localizado, nem sou residente, na União Europeia/EEE, Estados Unidos ou China.",
       payoutsRun: "Executar Payout",
       payoutsConnectFirst: "Conecte uma carteira primeiro.",
       payoutsCheckBoxes: "Marque as duas caixas para continuar.",

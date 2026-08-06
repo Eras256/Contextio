@@ -127,7 +127,13 @@ export const api = {
    */
   preparePayout: (
     auth: ApiAuth,
-    body: { scheduleId: string; address: string; contractorAttestation: true; acknowledgeTerms: true },
+    body: {
+      scheduleId: string;
+      address: string;
+      contractorAttestation: true;
+      acknowledgeTerms: true;
+      jurisdictionAttestation: true;
+    },
   ) =>
     request<{
       runId: string;
@@ -218,6 +224,8 @@ export const api = {
       asset: "XLM" | "USDC";
       amountBaseUnits: string;
       address: string;
+      acknowledgeTerms: true;
+      jurisdictionAttestation: true;
     },
   ) => request<{ xdr: string }>("/treasury/prepare", auth, { method: "POST", body: JSON.stringify(body) }),
 

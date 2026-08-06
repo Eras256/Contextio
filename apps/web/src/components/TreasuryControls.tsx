@@ -214,6 +214,8 @@ function RebalancePanel({ auth, address }: { auth: ApiAuth; address: string | nu
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [tx, setTx] = useState<string | null>(null);
+  const [termsOk, setTermsOk] = useState(false);
+  const [jurisdictionOk, setJurisdictionOk] = useState(false);
 
   const selectCls =
     "mt-1 w-full rounded-lg border border-white/15 bg-ink-900 px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand";
@@ -223,6 +225,7 @@ function RebalancePanel({ auth, address }: { auth: ApiAuth; address: string | nu
     const amountBaseUnits = toBase(amount);
     if (!amountBaseUnits) return setMsg("Enter a positive amount.");
     if (!address) return setMsg("Connect a wallet first.");
+    if (!termsOk || !jurisdictionOk) return setMsg("Check both boxes below first.");
     if (busy) return;
     setBusy(true);
     setMsg(null);
@@ -236,6 +239,8 @@ function RebalancePanel({ auth, address }: { auth: ApiAuth; address: string | nu
         asset: effectiveAsset,
         amountBaseUnits,
         address,
+        acknowledgeTerms: true,
+        jurisdictionAttestation: true,
       });
       setMsg("Approve in your wallet…");
       const signed = await signWalletTransaction(xdr, address);
@@ -307,11 +312,28 @@ function RebalancePanel({ auth, address }: { auth: ApiAuth; address: string | nu
         />
       </label>
 
+      <label className="mt-3 flex items-start gap-2 text-[11px] text-slate-400">
+        <input type="checkbox" checked={termsOk} onChange={(e) => setTermsOk(e.target.checked)} className="mt-0.5" />
+        {t("pages.treasury.moveTermsLabel")}
+      </label>
+      <label className="mt-2 flex items-start gap-2 text-[11px] text-slate-400">
+        <input type="checkbox" checked={jurisdictionOk} onChange={(e) => setJurisdictionOk(e.target.checked)} className="mt-0.5" />
+        {t("pages.treasury.moveJurisdictionLabel")}
+      </label>
+
       <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <button onClick={() => void move("in")} disabled={busy} className="btn-primary justify-center px-3 py-2 text-xs disabled:opacity-40">
+        <button
+          onClick={() => void move("in")}
+          disabled={busy || !termsOk || !jurisdictionOk}
+          className="btn-primary justify-center px-3 py-2 text-xs disabled:opacity-40"
+        >
           {busy ? "…" : "Aportar liquidez"}
         </button>
-        <button onClick={() => void move("out")} disabled={busy} className="btn-ghost justify-center px-3 py-2 text-xs disabled:opacity-40">
+        <button
+          onClick={() => void move("out")}
+          disabled={busy || !termsOk || !jurisdictionOk}
+          className="btn-ghost justify-center px-3 py-2 text-xs disabled:opacity-40"
+        >
           {busy ? "…" : "Retirar capital"}
         </button>
       </div>

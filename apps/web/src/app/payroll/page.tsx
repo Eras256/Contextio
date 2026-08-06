@@ -285,13 +285,14 @@ function PayoutsPanel({
   const tr = useT();
   const [contractorOk, setContractorOk] = useState(false);
   const [termsOk, setTermsOk] = useState(false);
+  const [jurisdictionOk, setJurisdictionOk] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [tx, setTx] = useState<string | null>(null);
 
   const run = async () => {
     if (!address) return setMsg(tr("pages.payroll.payoutsConnectFirst"));
-    if (!contractorOk || !termsOk) return setMsg(tr("pages.payroll.payoutsCheckBoxes"));
+    if (!contractorOk || !termsOk || !jurisdictionOk) return setMsg(tr("pages.payroll.payoutsCheckBoxes"));
     if (busy) return;
     setBusy(true);
     setMsg(null);
@@ -303,6 +304,7 @@ function PayoutsPanel({
         address,
         contractorAttestation: true,
         acknowledgeTerms: true,
+        jurisdictionAttestation: true,
       });
       setMsg(tr("pages.payroll.payoutsApprove"));
       const signedExecuteRunXdr = prepared.executeRunXdr ? await signWalletTransaction(prepared.executeRunXdr, address) : null;
@@ -342,9 +344,13 @@ function PayoutsPanel({
         <input type="checkbox" checked={termsOk} onChange={(e) => setTermsOk(e.target.checked)} className="mt-0.5" />
         {tr("pages.payroll.payoutsTermsLabel")}
       </label>
+      <label className="mt-2 flex items-start gap-2 text-xs text-slate-300">
+        <input type="checkbox" checked={jurisdictionOk} onChange={(e) => setJurisdictionOk(e.target.checked)} className="mt-0.5" />
+        {tr("pages.payroll.payoutsJurisdictionLabel")}
+      </label>
       <button
         onClick={() => void run()}
-        disabled={busy || !contractorOk || !termsOk}
+        disabled={busy || !contractorOk || !termsOk || !jurisdictionOk}
         className="btn-primary mt-3 text-xs disabled:opacity-40"
       >
         {busy ? tr("auth.connecting") : tr("pages.payroll.payoutsRun")}

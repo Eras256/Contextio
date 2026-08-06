@@ -32,6 +32,11 @@ const SECTIONS = {
       content: `These Terms shall be governed by and construed in accordance with the laws of Brazil, Argentina, Colombia, or Switzerland, depending on the jurisdiction of your tenant's registration or the applicable dispute venue. Any conflict, claim, or dispute arising out of these terms or our services shall be submitted to the matching arbitration channel defined in the LCP manifest, governed by the laws and languages specified in the contextio-legal-context.json metadata.`,
       link: { href: "/legal-context", label: "See the current, authoritative list of jurisdictions and dispute channels ➔" },
     },
+    {
+      id: "restricted",
+      title: "6. Restricted Jurisdictions",
+      content: `Self-custody treasury and payout actions (the features that build a transaction for you to sign in your own wallet) are not offered to, and may not be used by, any person or entity located in, incorporated in, or a resident of: (a) any member state of the European Union or the European Economic Area, where Regulation (EU) 2023/1114 (MiCA) establishes a union-wide licensing regime for crypto-asset service providers; (b) the United States, where money-transmission is regulated federally by FinCEN under the Bank Secrecy Act and separately by up to fifty individual state licensing regimes; or (c) the People's Republic of China, which prohibits commercial crypto-asset services outright. This list reflects jurisdictions with a well-documented regime we have not yet had reviewed for this specific non-custodial pattern — it is not a claim that Contextio has been confirmed safe everywhere else, only that these three carry a specific, known, and material cost to get wrong.`,
+    },
   ],
   es: [
     {
@@ -60,6 +65,11 @@ const SECTIONS = {
       content: `Estos Términos se regirán e interpretarán de acuerdo con las leyes de Brasil, Argentina, Colombia o Suiza, según la jurisdicción de registro de su empresa o el canal de disputa correspondiente. Cualquier conflicto, reclamo o disputa que surja de estos términos o de nuestros servicios se someterá al canal de arbitraje correspondiente definido en el manifiesto LCP, regulado por las leyes e idiomas especificados en la metadata de contextio-legal-context.json.`,
       link: { href: "/legal-context", label: "Ver la lista vigente y autoritativa de jurisdicciones y canales de disputa ➔" },
     },
+    {
+      id: "restricted",
+      title: "6. Jurisdicciones Restringidas",
+      content: `Las acciones de auto-custodia de treasury y payouts (las funciones que construyen una transacción para que usted la firme en su propia wallet) no se ofrecen, y no pueden ser usadas por, ninguna persona o entidad ubicada, constituida, o residente en: (a) cualquier estado miembro de la Unión Europea o del Espacio Económico Europeo, donde el Reglamento (UE) 2023/1114 (MiCA) establece un régimen de licencias a nivel de toda la unión para proveedores de servicios de activos criptográficos; (b) Estados Unidos, donde la transmisión de dinero está regulada a nivel federal por FinCEN bajo la Bank Secrecy Act y por separado por hasta cincuenta regímenes estatales de licencias; o (c) la República Popular China, que prohíbe totalmente los servicios comerciales de criptoactivos. Esta lista refleja jurisdicciones con un régimen bien documentado que aún no hemos revisado para este patrón no-custodio específico — no es una afirmación de que Contextio esté confirmado como seguro en cualquier otro lugar, solo que estas tres tienen un costo específico, conocido y material de equivocarse.`,
+    },
   ],
   pt: [
     {
@@ -87,6 +97,11 @@ const SECTIONS = {
       title: "5. Lei Regente e Resolução de Disputas",
       content: `Estes Termos serão regidos e interpretados de acordo com as leis do Brasil, Argentina, Colômbia ou Suíça, dependendo da jurisdição de registro de sua empresa ou do canal de disputa correspondente. Qualquer conflito, reivindicação ou disputa decorrente destes termos ou de nossos serviços será submetido ao canal de arbitragem correspondente definido no manifesto LCP, regido pelas leis e idiomas especificados nos metadados do contextio-legal-context.json.`,
       link: { href: "/legal-context", label: "Ver a lista vigente e autoritativa de jurisdições e canais de disputa ➔" },
+    },
+    {
+      id: "restricted",
+      title: "6. Jurisdições Restritas",
+      content: `As ações de autocustódia de tesouraria e pagamentos (as funcionalidades que constroem uma transação para você assinar em sua própria carteira) não são oferecidas a, e não podem ser usadas por, nenhuma pessoa ou entidade localizada, constituída ou residente em: (a) qualquer estado-membro da União Europeia ou do Espaço Econômico Europeu, onde o Regulamento (UE) 2023/1114 (MiCA) estabelece um regime de licenciamento em toda a união para provedores de serviços de criptoativos; (b) Estados Unidos, onde a transmissão de dinheiro é regulada em nível federal pela FinCEN sob a Bank Secrecy Act e separadamente por até cinquenta regimes estaduais de licenciamento; ou (c) a República Popular da China, que proíbe totalmente os serviços comerciais de criptoativos. Esta lista reflete jurisdições com um regime bem documentado que ainda não revisamos para este padrão não-custodial específico — não é uma afirmação de que a Contextio foi confirmada como segura em qualquer outro lugar, apenas que estas três têm um custo específico, conhecido e material de errar.`,
     },
   ],
 };

@@ -16,7 +16,7 @@
  */
 export const CANONICAL_TERMS_MARKDOWN = `# Contextio — Terms of Service
 
-_Last updated: 2026-08-06_
+_Last updated: 2026-08-06 (rev. 2)_
 
 ## 1. Scope of Services & Technology Provider Status
 
@@ -37,4 +37,8 @@ Blockchain transactions are public, irreversible, and inherit smart-contract ris
 ## 5. Governing Law and Dispute Resolution
 
 These Terms shall be governed by and construed in accordance with the laws of Brazil, Argentina, Colombia, or Switzerland, depending on the jurisdiction of your tenant's registration or the applicable dispute venue. Any conflict, claim, or dispute arising out of these terms or our services shall be submitted to the matching arbitration channel defined in the LCP manifest published at \`/.well-known/contextio-legal-context.json\` for your tenant, governed by the laws and languages specified therein. The current, authoritative list of jurisdictions and dispute channels is always the \`jurisdictions\` and \`disputeChannels\` fields of that manifest, human-readable at \`/legal-context\`.
+
+## 6. Restricted Jurisdictions
+
+Self-custody treasury and payout actions (the features that build a transaction for you to sign in your own wallet) are not offered to, and may not be used by, any person or entity located in, incorporated in, or a resident of: (a) any member state of the European Union or the European Economic Area, where Regulation (EU) 2023/1114 (MiCA) establishes a union-wide licensing regime for crypto-asset service providers; (b) the United States, where money-transmission is regulated federally by FinCEN under the Bank Secrecy Act and separately by up to fifty individual state licensing regimes; or (c) the People's Republic of China, which prohibits commercial crypto-asset services outright. This list reflects jurisdictions with a well-documented regime we have not yet had reviewed for this specific non-custodial pattern — it is not a claim that Contextio has been confirmed safe everywhere else, only that these three carry a specific, known, and material cost to get wrong. By checking the jurisdiction attestation box before a self-custody action, you confirm you are not located in, incorporated in, or a resident of any of the above.
 `;

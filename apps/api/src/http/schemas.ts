@@ -7,6 +7,20 @@ const asset = z.enum(["USDC", "XLM", "CETES", "BRL", "ARS", "COP"]);
 const rail = z.enum(["PIX", "TRANSFERENCIAS_3", "BRE_B", "STELLAR", "SEP24", "SEP31"]);
 const decimal = z.string().regex(/^\d+(\.\d{1,7})?$/u, "Expected a non-negative decimal");
 
+/**
+ * Restricted jurisdictions: EU/EEA (MiCA — a full CASP licensing regime),
+ * the United States (FinCEN/BSA money-transmitter rules, both federal and a
+ * 50-state patchwork), and China (an express, blanket prohibition on
+ * commercial crypto-asset services, not just a licensing regime to clear).
+ * Contextio's non-custodial thesis is genuinely researched for BR/AR/CO
+ * (see TECHNICAL.md) — these three are excluded by simple, honest default
+ * until the same review happens for them, not because they're assumed
+ * unsafe. See apps/web/src/middleware.ts for the matching technical
+ * geo-signal (defense in depth, not the boundary itself).
+ */
+export const restrictedJurisdictionAttestationMessage =
+  "jurisdictionAttestation must be true: this action isn't available to residents of the European Union/EEA, the United States, or China pending legal review of those jurisdictions specifically (MiCA, FinCEN/BSA, and China's express prohibition on crypto services, respectively).";
+
 export const treasuryConfigSchema = z.object({
   minLiquidityBaseUnits: z.string().regex(/^\d+$/u),
   maxYieldBps: z.number().int().min(0).max(10_000),
@@ -23,6 +37,13 @@ export const agentToggleSchema = z.object({
   signedMessage: z.string().min(1).max(2000),
 });
 
+/** Shared restricted-jurisdiction attestation — see restrictedJurisdictionAttestation below. */
+const jurisdictionAttestation = z.literal(true, {
+  errorMap: () => ({
+    message: restrictedJurisdictionAttestationMessage,
+  }),
+});
+
 /** Build an unsigned tx for the user to sign in their own wallet (self-custody). */
 export const prepareMoveSchema = z.object({
   venue: z.enum(["blend", "defindex"]).default("blend"),
@@ -30,6 +51,10 @@ export const prepareMoveSchema = z.object({
   asset: z.enum(["XLM", "USDC"]).default("XLM"),
   amountBaseUnits: z.string().regex(/^\d+$/u),
   address: z.string().regex(/^G[A-Z2-7]{55}$/u, "Expected a Stellar public key (G...)"),
+  acknowledgeTerms: z.literal(true, {
+    errorMap: () => ({ message: "acknowledgeTerms must be true to prepare a self-custody move." }),
+  }),
+  jurisdictionAttestation,
 });
 
 /** Submit a user-signed transaction envelope produced from `prepareMoveSchema`. */
@@ -94,6 +119,7 @@ export const preparePayrollRunSchema = z.object({
   acknowledgeTerms: z.literal(true, {
     errorMap: () => ({ message: "acknowledgeTerms must be true to prepare a self-custody payout." }),
   }),
+  jurisdictionAttestation,
 });
 
 export const submitPayrollRunSchema = z
