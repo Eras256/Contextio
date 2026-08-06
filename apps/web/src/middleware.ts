@@ -18,20 +18,38 @@ import { NETWORK_COOKIE } from "@/lib/network-shared";
  * vetted, on top of the account-level gate.
  *
  * Allowed list, and why:
- * - BR / AR / CO — the only product-selectable tenant countries; real PSAV
- *   research done for each (see contextio-mainnet-launch-plan, 2026-08-06).
- * - MX — never a selectable product country, but the deepest compliance
- *   research this project has (LFPIORPI/Ley Fintech, FATF functional-control
- *   test) was built specifically for it, and the operating team is
- *   Mexico-based.
- * NOT included: CH. It's in the LCP purely as a neutral arbitration seat
- * (same reason international contracts often pick Swiss law/venue) — FINMA's
- * stance on non-custodial software is directionally favorable (the same
- * holds-the-keys-or-not test as everywhere else, lighter SRO path instead of
- * a banking license) but was never confirmed the way BR/AR/CO/MX were, so it
- * stays out of this allowlist until that changes.
+ * - BR / AR / CO — the only product-selectable tenant countries; real
+ *   PSAV research done for each (see contextio-mainnet-launch-plan,
+ *   2026-08-06), all three using an "on behalf of the client" style
+ *   custody/intermediation test that Contextio's client-always-signs
+ *   architecture is built to sit outside of.
+ *
+ * NOT included, on purpose, both revisited 2026-08-06 same day after
+ * reading primary sources instead of assuming either way:
+ * - MX — REMOVED after reading LFPIORPI Art. 17 fracción XVI's actual
+ *   current text (reforma DOF 16-07-2025) directly, not a summary. Two
+ *   real problems, not just an abundance of caution: (1) its trigger is
+ *   "el ofrecimiento... de intercambio... o bien, provea medios para
+ *   custodiar, almacenar, o transferir activos virtuales" — "provide the
+ *   MEANS to" transfer is textually broader than BR/AR/CO's "on behalf
+ *   of the client" framing and arguably could reach pure signing-assistance
+ *   software, not just literal custody; (2) it explicitly extends to
+ *   "operaciones que se realicen con ciudadanos mexicanos desde otra
+ *   jurisdicción" — extraterritorial by CITIZENSHIP, not physical
+ *   location, which an IP-geolocation check cannot actually detect (a
+ *   Mexican citizen browsing from Brazil would pass this middleware and
+ *   still be the exact counterparty the statute names). TECHNICAL.md
+ *   already flagged the whole FATF/non-custodial thesis as "awaiting
+ *   written confirmation from counsel" before this was found — this
+ *   reading makes that caveat concrete rather than removing it.
+ * - CH — in the LCP purely as a neutral arbitration seat (same reason
+ *   international contracts often pick Swiss law/venue). FINMA's stance on
+ *   non-custodial software is directionally favorable (the same
+ *   holds-the-keys-or-not test as everywhere else, a lighter SRO path
+ *   instead of a banking license) but was never confirmed the way BR/AR/CO
+ *   were, so it stays out until that changes.
  */
-const MAINNET_ALLOWED_COUNTRIES = new Set(["BR", "AR", "CO", "MX"]);
+const MAINNET_ALLOWED_COUNTRIES = new Set(["BR", "AR", "CO"]);
 
 export function middleware(req: NextRequest) {
   const wantsMainnet = req.cookies.get(NETWORK_COOKIE)?.value === "mainnet";
