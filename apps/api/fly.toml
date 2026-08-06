@@ -21,7 +21,9 @@ primary_region = "gru"
   API_PORT = "8080"
   API_HOST = "0.0.0.0"
   STELLAR_NETWORK = "testnet"
-  STELLAR_RPC_URL = "https://soroban-testnet.stellar.org"
+  # STELLAR_RPC_URL set via `fly secrets` (QuikNode, 2026-08-06) — the URL
+  # embeds an API key, so it can't live in this checked-in file. Was the
+  # public "https://soroban-testnet.stellar.org" before.
   STELLAR_HORIZON_URL = "https://horizon-testnet.stellar.org"
   STELLAR_NETWORK_PASSPHRASE = "Test SDF Network ; September 2015"
   LCP_PLATFORM_DOMAIN = "contextio.xyz"

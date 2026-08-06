@@ -9,9 +9,10 @@
 # signer secret is present alongside STELLAR_NETWORK=mainnet. That's what keeps
 # treasury off and Payouts running via classic USDC payment only (no contract).
 #
-# TODO before real traffic: swap STELLAR_RPC_URL for a dedicated provider
-# (https://developers.stellar.org/docs/data/apis/rpc/providers) — the free
-# public endpoint below is fine to start, not for production load.
+# STELLAR_RPC_URL: dedicated provider (QuikNode) set via `fly secrets`,
+# 2026-08-06 — was the free public endpoint before, fine to start but not for
+# production load. The URL embeds an API key, so it can't live in this
+# checked-in file; see `fly secrets set -a contextio-api-mainnet STELLAR_RPC_URL=...`.
 #
 # Fee-sponsored Payouts submission (optional, safe on mainnet — no platform
 # key involved, see apps/api/src/integrations/relayer.ts): generate a key at
@@ -32,7 +33,6 @@ primary_region = "gru"
   API_HOST = "0.0.0.0"
 
   STELLAR_NETWORK = "mainnet"
-  STELLAR_RPC_URL = "https://mainnet.sorobanrpc.com"
   STELLAR_HORIZON_URL = "https://horizon.stellar.org"
   STELLAR_NETWORK_PASSPHRASE = "Public Global Stellar Network ; September 2015"
 
