@@ -25,6 +25,15 @@ primary_region = "gru"
   # public "https://soroban-testnet.stellar.org" before.
   STELLAR_HORIZON_URL = "https://horizon-testnet.stellar.org"
   STELLAR_NETWORK_PASSPHRASE = "Test SDF Network ; September 2015"
+  # This worker only ever runs against the testnet API above, but the
+  # `tenants` table has no network column yet, so its blanket "every tenant"
+  # polling would otherwise keep proposing (harmless noop, but real)
+  # agent_decisions rows against the tenant that exists solely to keep
+  # contextio-api-mainnet's public activity feed a genuine clean slate.
+  # adba87a4-... is that dedicated mainnet-only tenant (see
+  # contextio-mainnet-launch-plan, "found and fixed a real data-integrity
+  # bug" 2026-08-04).
+  WORKER_EXCLUDE_TENANT_IDS = "adba87a4-bfdf-4b00-bac4-f2f0f1d6bb72"
 
 # Background worker: no [http_service]. Single always-on machine.
 [[vm]]

@@ -166,6 +166,14 @@ export const workerEnvSchema = serverEnvSchema.extend({
   AGENT_POLL_INTERVAL_SECONDS: z.coerce.number().int().positive().default(300),
   AGENT_DRY_RUN: booleanFromString.default(true),
   API_BASE_URL: z.string().url().default("http://localhost:8080"),
+  // Tenants the worker must never poll/propose for — e.g. a tenant that only
+  // exists to isolate contextio-api-mainnet's public activity feed. There is
+  // no `network` column on tenants yet (deferred), so this is the explicit
+  // guard until that lands: without it, the worker's blanket
+  // "every tenant row" polling would keep generating (harmless but real)
+  // agent_decisions rows against a tenant meant to represent a clean,
+  // untouched mainnet deployment.
+  WORKER_EXCLUDE_TENANT_IDS: csv,
 });
 
 export type BaseEnv = z.infer<typeof baseEnvSchema>;

@@ -22,20 +22,29 @@ async function main(): Promise<void> {
   });
   const api = new ApiClient(config.API_BASE_URL, config.INTERNAL_API_SECRET, logger);
 
+  const excludedTenantIds = new Set(config.WORKER_EXCLUDE_TENANT_IDS);
+
   async function activeTenantIds(): Promise<string[]> {
     const { data, error } = await supabase.from("tenants").select("id");
     if (error) {
       logger.error({ err: error.message }, "Failed to list tenants");
       return [];
     }
-    return (data ?? []).map((r) => r.id as string);
+    return (data ?? [])
+      .map((r) => r.id as string)
+      .filter((id) => !excludedTenantIds.has(id));
   }
 
   const intervalMs = config.AGENT_POLL_INTERVAL_SECONDS * 1000;
   const scheduler = new Scheduler(logger);
 
   logger.info(
-    { intervalMs, dryRun: config.AGENT_DRY_RUN, api: config.API_BASE_URL },
+    {
+      intervalMs,
+      dryRun: config.AGENT_DRY_RUN,
+      api: config.API_BASE_URL,
+      excludedTenantIds: [...excludedTenantIds],
+    },
     "Worker starting",
   );
 
