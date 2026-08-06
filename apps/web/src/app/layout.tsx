@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
+import { GeoBlockNotice } from "@/components/GeoBlockNotice";
 import { AuthProvider } from "@/lib/auth";
 import { I18nProvider } from "@/lib/i18n";
 
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthProvider>
             <div className="flex min-h-screen max-w-full flex-col overflow-x-hidden">
               <DisclaimerBanner />
+              <GeoBlockNotice />
               <Navbar />
               <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6">{children}</main>
               <Footer />

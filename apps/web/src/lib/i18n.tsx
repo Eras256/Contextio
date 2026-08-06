@@ -63,6 +63,7 @@ const en: Dict = {
     modalTestnetSafe: "Testnet stays a free, no-risk demo — switch back anytime.",
     modalCancel: "Stay on Testnet",
     modalConfirm: "Switch to Mainnet",
+    geoBlocked: "Mainnet isn't available from your region yet — switched back to Testnet. Live in Brazil, Argentina, Colombia, or Mexico? Reconnecting from there will work.",
   },
   disclaimer: {
     banner:
@@ -532,6 +533,7 @@ const es: Dict = {
     modalTestnetSafe: "Testnet sigue siendo una demo gratis, sin riesgo — puedes volver cuando quieras.",
     modalCancel: "Quedarme en Testnet",
     modalConfirm: "Cambiar a Mainnet",
+    geoBlocked: "Mainnet todavía no está disponible desde tu región — volvimos a Testnet. ¿Estás en Brasil, Argentina, Colombia o México? Desde ahí sí funciona.",
   },
   disclaimer: {
     banner:
@@ -1001,6 +1003,7 @@ const pt: Dict = {
     modalTestnetSafe: "Testnet continua sendo uma demo gratuita, sem risco — volte quando quiser.",
     modalCancel: "Ficar na Testnet",
     modalConfirm: "Mudar para Mainnet",
+    geoBlocked: "A Mainnet ainda não está disponível na sua região — voltamos para Testnet. Está no Brasil, Argentina, Colômbia ou México? De lá funciona normalmente.",
   },
   disclaimer: {
     banner:
