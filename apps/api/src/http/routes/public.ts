@@ -20,7 +20,7 @@ export function publicRouter(): Router {
           payroll: config.PAYROLL_CONTRACT_ID || null,
         },
       };
-      const tenantId = config.AUTH_DEMO_TENANT_ID;
+      const tenantId = config.PUBLIC_ACTIVITY_TENANT_ID || config.AUTH_DEMO_TENANT_ID;
       if (!tenantId) {
         res.json({ ...base, decisions: [] });
         return;

@@ -53,12 +53,23 @@ primary_region = "gru"
   # would make the mainnet dashboard display testnet's 24/7 agent activity as
   # if it were real mainnet history. A fresh, empty tenant is the fix (see
   # contextio-mainnet-launch-plan memory, 2026-08-04).
-  AUTH_DEMO_TENANT_ID = "adba87a4-bfdf-4b00-bac4-f2f0f1d6bb72"
-  AUTH_DEMO_ROLE = "owner"
+  #
+  # Deliberately does NOT set AUTH_DEMO_TENANT_ID — found live 2026-08-06 that
+  # it had been copy-pasted from testnet's config unchanged. On testnet that's
+  # the intended "anyone can try the demo" convenience; on mainnet it meant any
+  # wallet completing SEP-53 sign-in auto-joined THIS tenant as "owner", no
+  # vetting at all — the actual "invitation only" enforcement below only ever
+  # restricted which TENANT could act, not who could become a member of it.
+  # PUBLIC_ACTIVITY_TENANT_ID keeps the harmless half (the public home-feed
+  # read) without the auto-enrollment.
+  PUBLIC_ACTIVITY_TENANT_ID = "adba87a4-bfdf-4b00-bac4-f2f0f1d6bb72"
 
   # "Por invitación": only this tenant can reach self-custody Payouts/treasury
-  # prepare-submit on mainnet. Add more ids here only when a company is
-  # actually ready — see requireMainnetAllowlist middleware.
+  # prepare-submit on mainnet, AND (as of the fix above) only wallets with a
+  # real tenant_users row can even become members of it — new wallets now get
+  # a clean "No workspace for this wallet" instead of auto-joining. Add more
+  # ids here only when a company is actually ready — see requireMainnetAllowlist
+  # middleware; add real members via a one-off script, not this auto-join.
   MAINNET_ALLOWLIST_TENANT_IDS = "adba87a4-bfdf-4b00-bac4-f2f0f1d6bb72"
 
 [http_service]

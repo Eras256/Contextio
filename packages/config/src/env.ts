@@ -138,11 +138,26 @@ export const serverEnvSchema = baseEnvSchema.extend({
 
   // Wallet auth (Sign In With Stellar). Session JWTs are signed with the
   // Supabase JWT secret (HS256) so they also authorize Supabase Realtime/RLS.
-  // A freshly-connected wallet auto-joins this tenant with AUTH_DEMO_ROLE (demo
-  // convenience); leave AUTH_DEMO_TENANT_ID blank to disable auto-join.
+  // A freshly-connected wallet auto-joins this tenant with AUTH_DEMO_ROLE — a
+  // deliberate testnet convenience (anyone can try the demo with zero signup
+  // friction) that must NEVER be set on mainnet: it grants membership (default
+  // role "owner") to literally any wallet that completes SEP-53 sign-in, no
+  // vetting at all. Found live 2026-08-06 still set on contextio-api-mainnet
+  // (copy-pasted from testnet's config without re-examining what it does) —
+  // removed there; PUBLIC_ACTIVITY_TENANT_ID below replaces its OTHER,
+  // harmless read-only use. Leave AUTH_DEMO_TENANT_ID blank to disable auto-join.
   AUTH_DEMO_TENANT_ID: z.string().optional().or(z.literal("")),
   AUTH_DEMO_ROLE: z.enum(["owner", "admin", "member", "viewer"]).default("owner"),
   AUTH_SESSION_TTL_SECONDS: z.coerce.number().int().positive().default(3600),
+
+  // Which tenant's agent_decisions the public, unauthenticated /public/activity
+  // feed reads (home page live feed). Deliberately separate from
+  // AUTH_DEMO_TENANT_ID — showing a tenant's activity publicly is harmless
+  // (sanitized fields only, no membership granted), unlike auto-enrolling
+  // wallets, so this can safely stay set on mainnet even with the auto-join
+  // above turned off. Falls back to AUTH_DEMO_TENANT_ID when unset so
+  // testnet's existing single-var setup keeps working unchanged.
+  PUBLIC_ACTIVITY_TENANT_ID: z.string().optional().or(z.literal("")),
 
   // Public Stellar address of the autonomous agent (shown in the Home live feed).
   AGENT_PUBLIC_ADDRESS: z.string().optional().or(z.literal("")),
