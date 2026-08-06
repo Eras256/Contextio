@@ -16,7 +16,7 @@
  */
 export const CANONICAL_TERMS_MARKDOWN = `# Contextio — Terms of Service
 
-_Last updated: 2026-06-30_
+_Last updated: 2026-08-06_
 
 ## 1. Scope of Services & Technology Provider Status
 
@@ -36,5 +36,5 @@ Blockchain transactions are public, irreversible, and inherit smart-contract ris
 
 ## 5. Governing Law and Dispute Resolution
 
-These Terms shall be governed by and construed in accordance with the laws of Brazil, Argentina, and Colombia depending on the jurisdiction of your tenant's registration. Any conflict, claim, or dispute arising out of these terms or our services shall be submitted to the default arbitration channel defined in the LCP manifest published at \`/.well-known/contextio-legal-context.json\` for your tenant, governed by the laws and languages specified therein.
+These Terms shall be governed by and construed in accordance with the laws of Brazil, Argentina, Colombia, or Switzerland, depending on the jurisdiction of your tenant's registration or the applicable dispute venue. Any conflict, claim, or dispute arising out of these terms or our services shall be submitted to the matching arbitration channel defined in the LCP manifest published at \`/.well-known/contextio-legal-context.json\` for your tenant, governed by the laws and languages specified therein. The current, authoritative list of jurisdictions and dispute channels is always the \`jurisdictions\` and \`disputeChannels\` fields of that manifest, human-readable at \`/legal-context\`.
 `;
