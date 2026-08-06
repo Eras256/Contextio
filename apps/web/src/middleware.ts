@@ -2,20 +2,46 @@ import { NextRequest, NextResponse } from "next/server";
 import { NETWORK_COOKIE } from "@/lib/network-shared";
 
 /**
- * Geo-gate for the mainnet network toggle.
+ * Geo-gate for mainnet's self-custody money-moving pages ONLY.
  *
- * This is NOT the real security boundary — that's already
+ * Two corrections made 2026-08-06, same day as the first version, after
+ * real questions surfaced real gaps rather than being answered from memory:
+ *
+ * 1. **Scope.** The first version matched almost every page and reverted the
+ *    WHOLE mainnet toggle — meaning read-only mainnet features that are
+ *    genuinely live and pose zero custody risk (Reflector oracle prices,
+ *    the public activity/on-chain-proof feed, the LCP document, docs,
+ *    agent/integrations pages) got blocked right along with the two pages
+ *    that actually have a "sign with your wallet, move real funds" button
+ *    (Treasury's "Move capital", Payroll's "Pay now"). There is no
+ *    solicitation concern in letting anyone, anywhere, read a public price
+ *    oracle. Narrowed the matcher to just `/treasury` and `/payroll`.
+ *
+ * 2. **Self-lockout.** The first version had no way to recognize the
+ *    project's own allowlisted operator — meaning a legitimate team member
+ *    testing mainnet from Mexico (excluded from the country list, see
+ *    below) would get bounced exactly like an unvetted stranger. Auth
+ *    session state lives in localStorage (lib/auth.tsx), which Edge
+ *    middleware cannot read — so `lib/auth.tsx` now also mirrors the
+ *    session's `tenantId` into a plain (non-secret; tenant UUIDs are
+ *    already public in this repo's docs/git history) `cx_tenant` cookie,
+ *    and this middleware skips the geo-check entirely when it matches a
+ *    known-allowlisted tenant. This is the account-level control (already
+ *    the real security boundary — see below) reaching into the UI layer,
+ *    not a new, separate gate.
+ *
+ * This is STILL NOT the real security boundary — that's
  * `MAINNET_ALLOWLIST_TENANT_IDS` on `contextio-api-mainnet` (a single
  * internal tenant today; verified via its live secrets/config, see
  * contextio-mainnet-launch-plan memory, 2026-08-06 audit). Even a visitor
- * who slips past this middleware can only look at read-only mainnet data —
- * every money-touching action still 403s server-side unless their tenant is
- * on that allowlist.
+ * who slips past this middleware still 403s server-side on the actual
+ * prepare/submit call unless their tenant is on that allowlist.
  *
- * What this DOES do: stop the web app itself from letting a visitor select
- * mainnet from a country whose non-custodial-software regulatory posture
- * hasn't been reviewed — i.e. avoid "soliciting" a jurisdiction we haven't
- * vetted, on top of the account-level gate.
+ * What this DOES do: stop the web app's two self-custody action pages from
+ * letting a visitor select mainnet from a country whose non-custodial-
+ * software regulatory posture hasn't been reviewed — i.e. avoid
+ * "soliciting" a jurisdiction we haven't vetted, on top of the
+ * account-level gate.
  *
  * Allowed list, and why:
  * - BR / AR / CO — the only product-selectable tenant countries; real
@@ -51,9 +77,31 @@ import { NETWORK_COOKIE } from "@/lib/network-shared";
  */
 const MAINNET_ALLOWED_COUNTRIES = new Set(["BR", "AR", "CO"]);
 
+// Mirrors contextio-api-mainnet's real MAINNET_ALLOWLIST_TENANT_IDS (single
+// internal tenant, see fly.mainnet.toml — the value isn't secret, it's
+// already public in git history/docs). Kept as a literal here rather than a
+// Vercel env var to avoid two copies drifting silently out of sync in
+// opposite directions; update both together if this ever changes.
+const BYPASS_TENANT_IDS = new Set(["adba87a4-bfdf-4b00-bac4-f2f0f1d6bb72"]);
+
+// Only the two pages with an actual "sign with your wallet, move real
+// funds" self-custody action belong here — everything else that's live on
+// mainnet (oracle, public activity, LCP, docs, agent, integrations) stays
+// reachable from anywhere, since reading public data isn't a solicitation
+// concern.
+const GATED_PATH_PREFIXES = ["/treasury", "/payroll"];
+
 export function middleware(req: NextRequest) {
+  const pathname = req.nextUrl.pathname;
+  if (!GATED_PATH_PREFIXES.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
   const wantsMainnet = req.cookies.get(NETWORK_COOKIE)?.value === "mainnet";
   if (!wantsMainnet) return NextResponse.next();
+
+  const tenantId = req.cookies.get("cx_tenant")?.value;
+  if (tenantId && BYPASS_TENANT_IDS.has(tenantId)) return NextResponse.next();
 
   const country = req.headers.get("x-vercel-ip-country");
   // No header at all means this isn't running behind Vercel's edge (local
@@ -72,5 +120,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|logo|icon).*)"],
+  matcher: ["/treasury/:path*", "/payroll/:path*"],
 };

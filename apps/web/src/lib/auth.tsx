@@ -6,6 +6,20 @@ import { connectWallet, disconnectWallet, signWalletMessage } from "./wallet";
 import { supabase } from "./supabase";
 
 const STORAGE_KEY = "contexta.session";
+// Plain (non-httpOnly, non-secret — tenant UUIDs are already public in this
+// repo's docs/git history) mirror of the session's tenantId, so Edge
+// middleware can read it — localStorage isn't visible there. Lets
+// middleware.ts recognize the project's own allowlisted mainnet tenant and
+// skip its geo-gate instead of blocking legitimate testing along with
+// everyone else.
+const TENANT_COOKIE = "cx_tenant";
+
+function setTenantCookie(tenantId: string | null) {
+  if (typeof document === "undefined") return;
+  document.cookie = tenantId
+    ? `${TENANT_COOKIE}=${tenantId}; path=/; max-age=31536000; SameSite=Lax`
+    : `${TENANT_COOKIE}=; path=/; max-age=0`;
+}
 
 interface AuthState {
   loading: boolean;
@@ -47,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!isExpired(s)) {
           setSession(s);
           applyRealtimeAuth(s.token);
+          setTenantCookie(s.tenantId);
         } else {
           localStorage.removeItem(STORAGE_KEY);
         }
@@ -68,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
       setSession(s);
       applyRealtimeAuth(s.token);
+      setTenantCookie(s.tenantId);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -79,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(STORAGE_KEY);
     setSession(null);
     applyRealtimeAuth(null);
+    setTenantCookie(null);
     await disconnectWallet();
   }
 
