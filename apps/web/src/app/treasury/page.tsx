@@ -139,9 +139,14 @@ export default function TreasuryPage() {
           <Rule k={tr("pages.treasury.ruleFloor")} v={cfg ? usdBase(cfg.minLiquidityBaseUnits) : "—"} />
           <Rule k={tr("pages.treasury.ruleMaxYield")} v={cfg ? bps(cfg.maxYieldBps) : "—"} />
           <Rule k={tr("pages.treasury.ruleSensitivity")} v={cfg ? `${cfg.volatilitySensitivity} / 100` : "—"} />
-          <Rule k="🇧🇷 BR" v={cfg ? bps(cfg.countryLimitsBps.BR ?? 0) : "—"} />
-          <Rule k="🇦🇷 AR" v={cfg ? bps(cfg.countryLimitsBps.AR ?? 0) : "—"} />
-          <Rule k="🇨🇴 CO" v={cfg ? bps(cfg.countryLimitsBps.CO ?? 0) : "—"} />
+          {/* Plain text codes, no flag emoji: relies on OS-level flag-glyph
+              support that's inconsistent across platforms (esp. Windows
+              without certain font packages) — was rendering as a
+              visually-duplicated "BR BR" when the glyph fell back to its
+              literal regional-indicator letters instead of a flag icon. */}
+          <Rule k="BR" v={cfg ? bps(cfg.countryLimitsBps.BR ?? 0) : "—"} />
+          <Rule k="AR" v={cfg ? bps(cfg.countryLimitsBps.AR ?? 0) : "—"} />
+          <Rule k="CO" v={cfg ? bps(cfg.countryLimitsBps.CO ?? 0) : "—"} />
         </Card>
 
         <Card className="lg:col-span-2">
