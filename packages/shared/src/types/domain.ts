@@ -4,7 +4,7 @@
  */
 
 export type Country = "BR" | "AR" | "CO";
-export type AssetSymbol = "USDC" | "XLM" | "CETES" | "BRL" | "ARS" | "COP";
+export type AssetSymbol = "USDC" | "XLM" | "CETES" | "BRL" | "ARS" | "COP" | "EURC";
 
 /** On/off-ramp rails per country. */
 export type Rail = "PIX" | "TRANSFERENCIAS_3" | "BRE_B" | "STELLAR" | "SEP24" | "SEP31";

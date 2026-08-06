@@ -63,6 +63,12 @@ Contextio is an AI agent that runs **treasury** and **payroll** on Stellar. It k
 
 **Verifiable example:** USDC payroll settled to 3 employees — tx `4bd1b927df7ab404dcd56abe649dcd47f56aa174b8116c747ec4f1aabc12cf78`.
 
+**EMEA extension (added 2026-08-06, real pieces only — no fake coverage):** Contextio was built LatAm-first (BR/AR/CO), but the Stellar/Soroban core is region-agnostic, and three genuinely real EMEA-capable pieces already exist:
+- **A real Swiss jurisdiction + dispute channel** — `jurisdictions` now includes `CH`, with its own arbitration channel at `/legal/disputes/ch` naming the real institution (Swiss Arbitration Centre, formerly SCAI, renamed 1 June 2021 — verified, not assumed) and the real governing framework (Swiss PILA Chapter 12 for international matters). This isn't a random EU pick — it's the same jurisdiction CV Labs (the Stellar accelerator partner) itself operates from.
+- **Real EURC pricing** — Reflector's external oracle has no direct fiat EUR/GBP/CHF feed, but it does have a real, verified price for EURC (Circle's actual EUR-pegged Stellar asset, issuer `GDHU6WRG…Y4ITNPP2` mainnet) — confirmed live against the real oracle, not assumed. `treasuryService.onchainPositions` now values a real EURC balance correctly instead of miscounting it as $1 like USDC. **Honest caveat:** no tenant has ever actually held EURC in the treasury wallet — the capability is real and tested against the real oracle, the on-chain usage isn't (yet).
+- **BlindPay's existing SEPA rail** (see Milestone 2) already accepts Stellar-USDC for SEPA (Europe) payouts as of June 2026 per their own changelog — the same off-ramp integration scaffolded for LatAm reaches EMEA's biggest single corridor (the Eurozone) without a second partner relationship.
+- **Not done, and not faked:** no EMEA customer discovery, no real EURC funds ever moved, no confirmation from CV Labs that a LatAm-founded team building for LatAm-plus-EMEA actually satisfies their "based in or serving EMEA" eligibility language — that's a real open question, not a solved one.
+
 ## 4. Security & trust model
 
 - **Non-custodial:** keys stay with the company. The user signs treasury moves in Freighter; the agent uses a delegated operational key bounded by signed rules.

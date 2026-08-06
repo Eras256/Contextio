@@ -5,7 +5,7 @@ import { useT, Locale } from "@/lib/i18n";
 import { Card } from "@/components/ui";
 import Link from "next/link";
 
-type CountryCode = "br" | "ar" | "co";
+type CountryCode = "br" | "ar" | "co" | "ch";
 
 interface DisputeContent {
   title: string;
@@ -68,6 +68,22 @@ const CONTENT: Record<Locale, Record<CountryCode, DisputeContent>> = {
       ],
       arbitrationRules: "Arbitration Rules",
       arbitrationRulesDesc: "Subject to the Arbitration Rules of the Bogota Chamber of Commerce. Voluntary submission to arbitration is legally binding for both payroll and treasury actions."
+    },
+    ch: {
+      title: "Dispute Resolution Channel & Arbitration Forum — Switzerland (EMEA)",
+      governingLaw: "Governing Law",
+      governingLawDesc: "Swiss Confederation. Transactions and LCP commitments involving tenants operating in the Europe, Middle East & Africa (EMEA) region are governed by and construed in accordance with Swiss substantive law and, for international matters, the Swiss Federal Act on Private International Law (PILA), Chapter 12.",
+      venue: "Arbitration Forum & Venue",
+      venueDesc: "Swiss Arbitration Centre (formerly SCAI — Swiss Chambers' Arbitration Institution, renamed 1 June 2021), applying the Swiss Rules of International Arbitration. Seat of arbitration: Switzerland.",
+      procedureTitle: "Arbitration Procedure & Scope",
+      procedureSteps: [
+        "Filing of the Notice of Arbitration with the Swiss Arbitration Centre's secretariat (Geneva, Lugano, or Zurich).",
+        "Appointment of a sole (1) arbitrator in accordance with the Swiss Rules of International Arbitration.",
+        "The language of the proceedings shall be English.",
+        "The arbitral award shall be final and binding, enforceable under PILA Chapter 12 and, where applicable, the New York Convention."
+      ],
+      arbitrationRules: "Arbitration Rules",
+      arbitrationRulesDesc: "Subject to the Swiss Rules of International Arbitration. All parties agree to settle disputes solely via individual binding arbitration, waiving any rights to class action lawsuits or ordinary court trials."
     }
   },
   es: {
@@ -118,6 +134,22 @@ const CONTENT: Record<Locale, Record<CountryCode, DisputeContent>> = {
       ],
       arbitrationRules: "Reglamento de Arbitraje",
       arbitrationRulesDesc: "Sujeto al Reglamento de Arbitraje de la Cámara de Comercio de Bogotá. El sometimiento voluntario al arbitraje es legalmente vinculante para operaciones de nómina y tesorería."
+    },
+    ch: {
+      title: "Canal de Resolución de Disputas y Foro de Arbitraje — Suiza (EMEA)",
+      governingLaw: "Ley Aplicable",
+      governingLawDesc: "Confederación Suiza. Las transacciones y compromisos LCP de inquilinos que operan en la región de Europa, Medio Oriente y África (EMEA) se rigen por el derecho sustantivo suizo y, para asuntos internacionales, por la Ley Federal Suiza de Derecho Internacional Privado (PILA), Capítulo 12.",
+      venue: "Foro y Sede de Arbitraje",
+      venueDesc: "Swiss Arbitration Centre (antes SCAI — Swiss Chambers' Arbitration Institution, renombrado el 1 de junio de 2021), bajo las Swiss Rules of International Arbitration. Sede del arbitraje: Suiza.",
+      procedureTitle: "Procedimiento de Arbitraje y Alcance",
+      procedureSteps: [
+        "Presentación de la notificación de arbitraje ante la secretaría del Swiss Arbitration Centre (Ginebra, Lugano o Zúrich).",
+        "Designación de un árbitro único (1) de acuerdo con las Swiss Rules of International Arbitration.",
+        "El idioma de los procedimientos será el inglés.",
+        "El laudo arbitral será final y vinculante, ejecutable bajo el Capítulo 12 de la PILA y, cuando aplique, la Convención de Nueva York."
+      ],
+      arbitrationRules: "Reglamento de Arbitraje",
+      arbitrationRulesDesc: "Sujeto a las Swiss Rules of International Arbitration. Ambas partes acuerdan resolver disputas únicamente mediante arbitraje individual vinculante, renunciando a juicios ordinarios."
     }
   },
   pt: {
@@ -168,6 +200,22 @@ const CONTENT: Record<Locale, Record<CountryCode, DisputeContent>> = {
       ],
       arbitrationRules: "Regras de Arbitragem",
       arbitrationRulesDesc: "Sujeito às Regras de Arbitragem da Câmara de Comércio de Bogotá. A submissão voluntária é juridicamente vinculante para ações de folha e tesouraria."
+    },
+    ch: {
+      title: "Canal de Resolução de Disputas e Fórum de Arbitragem — Suíça (EMEA)",
+      governingLaw: "Lei Aplicável",
+      governingLawDesc: "Confederação Suíça. Transações e compromissos LCP de locatários que operam na região da Europa, Oriente Médio e África (EMEA) são regidos pelo direito substantivo suíço e, para questões internacionais, pela Lei Federal Suíça de Direito Internacional Privado (PILA), Capítulo 12.",
+      venue: "Fórum e Sede de Arbitragem",
+      venueDesc: "Swiss Arbitration Centre (antigo SCAI — Swiss Chambers' Arbitration Institution, renomeado em 1º de junho de 2021), sob as Swiss Rules of International Arbitration. Sede da arbitragem: Suíça.",
+      procedureTitle: "Procedimento Arbitral e Escopo",
+      procedureSteps: [
+        "Apresentação da notificação de arbitragem à secretaria do Swiss Arbitration Centre (Genebra, Lugano ou Zurique).",
+        "Nomeação de um árbitro único (1) de acordo com as Swiss Rules of International Arbitration.",
+        "O idioma dos procedimentos será o inglês.",
+        "A sentença arbitral será final e vinculante, executável sob o Capítulo 12 da PILA e, quando aplicável, a Convenção de Nova York."
+      ],
+      arbitrationRules: "Regras de Arbitragem",
+      arbitrationRulesDesc: "Sujeito às Swiss Rules of International Arbitration. Ambas as partes concordam em resolver disputas apenas por arbitragem vinculante individual, renunciando a processos judiciais ordinários."
     }
   }
 };

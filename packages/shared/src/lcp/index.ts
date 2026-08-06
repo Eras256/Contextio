@@ -148,8 +148,12 @@ export function buildLegalContext(input: BuildLegalContextInput): LegalContext {
         scope: ["payroll", "offramp"],
       },
     ],
-    // Coverage across the three LATAM markets Contextio operates in: a dispute
-    // channel per jurisdiction (Brazil, Argentina, Colombia).
+    // Coverage across the LATAM markets Contextio operates in (Brazil,
+    // Argentina, Colombia) plus Switzerland — the real, verifiable EMEA
+    // channel (Swiss Arbitration Centre, ex-SCAI) added 2026-08-06 for
+    // tenants operating in Europe/Middle East/Africa, alongside the real
+    // technical EMEA reach already live: BlindPay's Stellar-SEPA payout rail
+    // and EURC pricing via the same Reflector oracle used for USDC/XLM.
     disputeChannels: [
       {
         type: "arbitration",
@@ -172,10 +176,17 @@ export function buildLegalContext(input: BuildLegalContextInput): LegalContext {
         governingLaw: "CO",
         language: "es",
       },
+      {
+        type: "arbitration",
+        provider: "Contextio arbitration — Switzerland (EMEA)",
+        venue: `https://${input.tenantDomain}/legal/disputes/ch`,
+        governingLaw: "CH",
+        language: "en",
+      },
     ],
     settlement: {
       networks: ["stellar:testnet", "stellar:pubnet"],
-      assets: ["USDC", "XLM", "BRL", "ARS", "COP"],
+      assets: ["USDC", "XLM", "BRL", "ARS", "COP", "EURC"],
     },
     publishedAt: now,
   });

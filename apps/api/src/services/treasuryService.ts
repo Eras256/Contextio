@@ -32,11 +32,16 @@ export interface RebalanceRequest {
   actorType: "user" | "agent";
 }
 
-/** Dashboard pricing: USDC/BlendUSDC = $1; XLM priced via the Reflector on-chain
- *  oracle when available, falling back to this testnet reference rate. */
+/** Dashboard pricing: USDC/BlendUSDC = $1; XLM and EURC priced via the
+ *  Reflector on-chain oracle when available, falling back to these reference
+ *  rates. EURC (Circle's real EUR-pegged Stellar asset) has no direct fiat
+ *  EUR/GBP/CHF feed on Reflector's external oracle, but EURC itself does —
+ *  verified live against the real oracle, 2026-08-06, the same query pattern
+ *  already used for XLM/USD. */
 const XLM_USD = 0.11;
-function toUsdBase(assetCode: string, amount: number, xlmUsd: number = XLM_USD): bigint {
-  const usd = assetCode === "XLM" ? amount * xlmUsd : amount;
+const EURC_USD = 1.08;
+function toUsdBase(assetCode: string, amount: number, xlmUsd: number = XLM_USD, eurcUsd: number = EURC_USD): bigint {
+  const usd = assetCode === "XLM" ? amount * xlmUsd : assetCode === "EURC" ? amount * eurcUsd : amount;
   return BigInt(Math.max(0, Math.round(usd * 1e7)));
 }
 
@@ -128,8 +133,13 @@ export class TreasuryService {
     }
     const addr = this.treasuryAddress as string;
     const positions: TreasuryPosition[] = [];
-    // Real XLM/USD from the Reflector on-chain oracle; falls back to the reference rate.
-    const xlmUsd = (this.reflector ? await this.reflector.getUsdPrice("XLM") : null) ?? XLM_USD;
+    // Real XLM/USD and EURC/USD from the Reflector on-chain oracle; falls back
+    // to the reference rates. EURC is the real Circle-issued EUR-pegged asset
+    // Contextio's EMEA reach (see BlindPay's Stellar-SEPA rail) settles in.
+    const [xlmUsd, eurcUsd] = await Promise.all([
+      (this.reflector ? this.reflector.getUsdPrice("XLM") : Promise.resolve(null)).then((v) => v ?? XLM_USD),
+      (this.reflector ? this.reflector.getUsdPrice("EURC") : Promise.resolve(null)).then((v) => v ?? EURC_USD),
+    ]);
     const mk = (
       asset: string,
       strategy: TreasuryPosition["strategy"],
@@ -155,13 +165,16 @@ export class TreasuryService {
     if (bal.status === "fulfilled") {
       let usdc = 0;
       let xlm = 0;
+      let eurc = 0;
       for (const b of bal.value) {
         const amt = Number(b.balance) || 0;
         if (b.assetType === "native") xlm += amt;
         else if (b.assetCode === "USDC") usdc += amt; // Circle + BlendUSDC share the code
+        else if (b.assetCode === "EURC") eurc += amt; // Circle's EUR-pegged asset — the EMEA leg
       }
-      if (usdc > 0) positions.push(mk("USDC", "liquidity", toUsdBase("USDC", usdc, xlmUsd), null));
-      if (xlm > 0) positions.push(mk("XLM", "liquidity", toUsdBase("XLM", xlm, xlmUsd), null));
+      if (usdc > 0) positions.push(mk("USDC", "liquidity", toUsdBase("USDC", usdc, xlmUsd, eurcUsd), null));
+      if (xlm > 0) positions.push(mk("XLM", "liquidity", toUsdBase("XLM", xlm, xlmUsd, eurcUsd), null));
+      if (eurc > 0) positions.push(mk("EURC", "liquidity", toUsdBase("EURC", eurc, xlmUsd, eurcUsd), null));
     } else {
       this.logger.warn({ err: String(bal.reason) }, "Treasury balances read failed");
     }

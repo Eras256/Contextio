@@ -16,7 +16,7 @@ const FALLBACK = {
   tenantDomain: "contextio.xyz",
   provider: {
     legalName: "Acme Treasury Ltda",
-    jurisdiction: "BR, AR, CO",
+    jurisdiction: "BR",
     contactEmail: "legal@contextio.xyz",
   },
   terms: "https://contextio-api.fly.dev/.well-known/contextio-terms.md",
@@ -26,10 +26,10 @@ const FALLBACK = {
   acceptanceRequired: true,
   disputeResolution: {
     method: "Contextio arbitration",
-    jurisdiction: "BR, AR, CO",
+    jurisdiction: "BR, AR, CO, CH",
     contact: "legal@contextio.xyz",
   },
-  jurisdictions: ["BR", "AR", "CO"],
+  jurisdictions: ["BR", "AR", "CO", "CH"],
   consentRequirements: [
     {
       id: "treasury-management",
@@ -166,14 +166,12 @@ export default function LegalContextPage() {
               </div>
               <div className="flex justify-between py-2.5">
                 <span className="text-slate-400">{t("legal.jurisdiction")}</span>
-                <span className="font-mono font-medium text-white">
-                  {doc.provider.jurisdiction === "BR" ? "BR, AR, CO" : doc.provider.jurisdiction}
-                </span>
+                <span className="font-mono font-medium text-white">{doc.provider.jurisdiction}</span>
               </div>
               <div className="flex justify-between py-2.5">
                 <span className="text-slate-400">{t("legal.operatingJurisdictions")}</span>
                 <span className="font-mono font-medium text-white">
-                  {doc.jurisdictions ? doc.jurisdictions.join(", ") : "BR, AR, CO"}
+                  {doc.jurisdictions ? doc.jurisdictions.join(", ") : "BR, AR, CO, CH"}
                 </span>
               </div>
               <div className="flex justify-between py-2.5">
