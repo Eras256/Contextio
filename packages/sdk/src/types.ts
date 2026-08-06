@@ -95,13 +95,45 @@ export interface LcpDisputeChannel {
   language: string;
 }
 
+/** spec: `disputeResolution` (Level 4) from the real Legal Context Protocol standard. */
+export interface LcpDisputeResolution {
+  method: string;
+  jurisdiction: string;
+  contact: string;
+  clauseId?: string;
+  source?: string;
+  catalog?: string;
+}
+
+/**
+ * As of SDK 0.3.0 / LCP spec version 0.2.0, this is a genuine implementation
+ * of the real "Legal Context Protocol" open standard (legalcontextprotocol.org,
+ * June 2026, AAA + Integra Ledger + SDF) — fields without a `spec:` note below
+ * are Contextio-specific extensions the standard's schema explicitly allows
+ * (`additionalProperties: true`).
+ */
 export interface LegalContext {
+  /** spec, REQUIRED: absolute HTTPS URL of the standalone terms document. */
+  terms: string;
+  /** spec: format of the `terms` document. */
+  termsFormat: "markdown" | "json" | "plain" | "html" | "pdf";
+  /** spec, Level 2: SHA-256 of `terms`' actual bytes — `0x` + 64 lowercase hex. */
+  atrHash: string;
+  /** spec, Level 3. */
+  acceptanceRequired: boolean;
+  /** spec, Level 4: primary dispute-resolution channel (see `disputeChannels` for full per-jurisdiction detail). */
+  disputeResolution: LcpDisputeResolution;
+  /** spec, optional. */
+  contact?: { legal?: string; technical?: string };
+  /** spec, Level 4. */
+  api?: string;
+
   specVersion: string;
   contextId: string;
   version: number;
   tenantDomain: string;
   provider: LcpParty;
-  terms: { url: string; sha256: string; effectiveDate: string };
+  termsEffectiveDate: string;
   jurisdictions: string[];
   consentRequirements: LcpConsentRequirement[];
   disputeChannels: LcpDisputeChannel[];

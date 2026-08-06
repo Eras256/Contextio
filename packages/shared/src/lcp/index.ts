@@ -2,12 +2,14 @@ import { createHash } from "node:crypto";
 import { canonicalize } from "./canonical.js";
 import {
   legalContextSchema,
+  LCP_SPEC_VERSION,
   type LcpBinding,
   type LegalContext,
 } from "./types.js";
 
 export * from "./types.js";
 export { canonicalize } from "./canonical.js";
+export { CANONICAL_TERMS_MARKDOWN } from "./termsDocument.js";
 
 /**
  * Compute the tamper-evident SHA-256 (hex) of a legal context over its
@@ -80,7 +82,9 @@ export function legalContextUrl(tenantDomain: string): string {
 
 /**
  * Build a fresh legal context document from tenant inputs and sensible LATAM
- * defaults. Real prose lives at `terms.url`; this manifest references it.
+ * defaults. Real prose lives at `terms` (the spec-required URL); this
+ * manifest references it and carries `atrHash` = SHA-256 of that document's
+ * actual bytes, per the Legal Context Protocol standard's Level 2 definition.
  */
 export interface BuildLegalContextInput {
   contextId: string;
@@ -90,15 +94,36 @@ export interface BuildLegalContextInput {
   providerJurisdiction: string;
   providerContactEmail: string;
   termsUrl: string;
+  /** SHA-256 hex (64 lowercase chars, no `0x` prefix) of the `termsUrl` document's actual bytes. */
   termsSha256: string;
   termsEffectiveDate: string;
   jurisdictions: string[];
+  /** spec `api`: URL of Contextio's own legal-context API for this tenant. */
+  apiUrl: string;
 }
 
 export function buildLegalContext(input: BuildLegalContextInput): LegalContext {
   const now = new Date().toISOString();
   return legalContextSchema.parse({
-    specVersion: "0.1.0",
+    // Official Legal Context Protocol fields.
+    terms: input.termsUrl,
+    termsFormat: "markdown",
+    atrHash: `0x${input.termsSha256.toLowerCase()}`,
+    acceptanceRequired: true,
+    disputeResolution: {
+      method: "Contextio arbitration — see `disputeChannels` for the per-jurisdiction venue (BR/AR/CO)",
+      jurisdiction: input.jurisdictions.join(", "),
+      contact: input.providerContactEmail,
+      source: `https://${input.tenantDomain}/legal/disputes/${input.jurisdictions[0]?.toLowerCase() ?? "br"}`,
+    },
+    contact: {
+      legal: input.providerContactEmail,
+      technical: input.providerContactEmail,
+    },
+    api: input.apiUrl,
+
+    // Contextio extensions.
+    specVersion: LCP_SPEC_VERSION,
     contextId: input.contextId,
     version: input.version,
     tenantDomain: input.tenantDomain,
@@ -107,11 +132,7 @@ export function buildLegalContext(input: BuildLegalContextInput): LegalContext {
       jurisdiction: input.providerJurisdiction,
       contactEmail: input.providerContactEmail,
     },
-    terms: {
-      url: input.termsUrl,
-      sha256: input.termsSha256,
-      effectiveDate: input.termsEffectiveDate,
-    },
+    termsEffectiveDate: input.termsEffectiveDate,
     jurisdictions: input.jurisdictions,
     consentRequirements: [
       {

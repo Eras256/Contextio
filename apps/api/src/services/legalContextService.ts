@@ -51,14 +51,26 @@ export class LegalContextService {
     termsText?: string;
     jurisdictions: string[];
     actorId: string | null;
+    /** Public base URL of this API deployment — becomes the LCP document's spec `api` field. */
+    apiBaseUrl: string;
   }): Promise<{ document: LegalContext; hash: string; url: string }> {
     const existing = await this.repo.getLegalContextByTenant(input.tenantId);
     const nextVersion = existing ? (existing.version as number) + 1 : 1;
     const contextId = existing ? (existing.context_id as string) : randomUUID();
 
-    const termsSha256 = createHash("sha256")
-      .update(input.termsText ?? input.termsUrl, "utf8")
-      .digest("hex");
+    // atrHash (per the Legal Context Protocol standard, Level 2) must be a
+    // hash of the terms document's ACTUAL bytes — a verifier fetches `terms`
+    // independently and compares. Hashing the URL string as a fallback (the
+    // old behavior when a caller omitted `termsText`) produces a value that
+    // silently fails that comparison, which isn't real compliance, just a
+    // shape that looks like it. Require the real content instead.
+    if (!input.termsText) {
+      throw new Error(
+        "legal.publish: termsText is required — atrHash must hash the terms document's real " +
+          "content, not the URL string, or independent verification will fail",
+      );
+    }
+    const termsSha256 = createHash("sha256").update(input.termsText, "utf8").digest("hex");
 
     const document = buildLegalContext({
       contextId,
@@ -71,6 +83,7 @@ export class LegalContextService {
       termsSha256,
       termsEffectiveDate: new Date().toISOString().slice(0, 10),
       jurisdictions: input.jurisdictions,
+      apiUrl: `${input.apiBaseUrl.replace(/\/$/, "")}/api/v1/legal`,
     });
     const hash = hashLegalContext(document);
 

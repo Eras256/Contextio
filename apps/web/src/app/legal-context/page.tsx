@@ -10,7 +10,7 @@ const API = resolveApiUrl();
 // Shape + graceful fallback; the real, published LCP (with the real terms hash)
 // is fetched on mount from the canonical .well-known endpoint.
 const FALLBACK = {
-  specVersion: "0.1.0",
+  specVersion: "0.2.0",
   contextId: "11111111-1111-4111-8111-111111111111",
   version: 1,
   tenantDomain: "contextio.xyz",
@@ -19,10 +19,15 @@ const FALLBACK = {
     jurisdiction: "BR, AR, CO",
     contactEmail: "legal@contextio.xyz",
   },
-  terms: {
-    url: "https://contextio.xyz/legal/terms",
-    sha256: "0000000000000000000000000000000000000000000000000000000000000000",
-    effectiveDate: "2026-01-01",
+  terms: "https://contextio-api.fly.dev/.well-known/contextio-terms.md",
+  termsFormat: "markdown",
+  termsEffectiveDate: "2026-01-01",
+  atrHash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+  acceptanceRequired: true,
+  disputeResolution: {
+    method: "Contextio arbitration",
+    jurisdiction: "BR, AR, CO",
+    contact: "legal@contextio.xyz",
   },
   jurisdictions: ["BR", "AR", "CO"],
   consentRequirements: [
@@ -70,8 +75,8 @@ export default function LegalContextPage() {
         setDoc({
           ...FALLBACK,
           ...d,
-          terms: { ...FALLBACK.terms, ...(d.terms ?? {}) },
           provider: { ...FALLBACK.provider, ...(d.provider ?? {}) },
+          disputeResolution: { ...FALLBACK.disputeResolution, ...(d.disputeResolution ?? {}) },
           settlement: { ...FALLBACK.settlement, ...(d.settlement ?? {}) },
         } as typeof FALLBACK);
       })
@@ -191,18 +196,18 @@ export default function LegalContextPage() {
             <div className="divide-y divide-white/5 text-sm">
               <div className="flex justify-between py-2.5">
                 <span className="text-slate-400">{t("legal.effectiveDate")}</span>
-                <span className="font-mono text-white">{doc.terms.effectiveDate}</span>
+                <span className="font-mono text-white">{doc.termsEffectiveDate}</span>
               </div>
               <div className="flex flex-col gap-1.5 py-2.5">
                 <span className="text-slate-400">{t("legal.termsUrl")}</span>
-                <a href={doc.terms.url} target="_blank" rel="noreferrer" className="text-accent hover:underline break-all text-xs">
-                  {doc.terms.url} ↗
+                <a href={doc.terms} target="_blank" rel="noreferrer" className="text-accent hover:underline break-all text-xs">
+                  {doc.terms} ↗
                 </a>
               </div>
               <div className="flex flex-col gap-1.5 py-2.5">
                 <span className="text-slate-400">{t("legal.termsHash")}</span>
                 <span className="font-mono text-[10px] text-slate-400 break-all select-all">
-                  {doc.terms.sha256}
+                  {doc.atrHash}
                 </span>
               </div>
             </div>

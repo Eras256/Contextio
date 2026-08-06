@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { CANONICAL_TERMS_MARKDOWN } from "@contextio/shared/lcp";
 import { requireCapability } from "../middleware/rbac.js";
 import { requireCtx, HttpError } from "../context.js";
 import { publishLegalSchema } from "../schemas.js";
@@ -46,6 +47,7 @@ export function legalRouter(): Router {
         tenantId: ctx.tenantId,
         tenantDomain: tenant.domain,
         actorId: ctx.userId,
+        apiBaseUrl: `${req.protocol}://${req.get("host")}`,
         ...body,
       });
       await req.container.audit.record({
@@ -70,11 +72,16 @@ export function legalRouter(): Router {
  * platform we resolve the tenant by the Host header (or `?domain=` for local
  * testing) — in production each tenant maps this path on their own domain.
  *
- * Deliberately NOT served at `/.well-known/legal-context.json` — that path
- * is reserved by the AAA/Integra Ledger/SDF "Legal Context Protocol" open
- * standard (legalcontextprotocol.org, launched June 2026). Our document
- * predates that standard and uses an unrelated schema; serving it at the
- * same well-known path would collide with a real, SDF-co-founded standard.
+ * As of v0.2.0 this document is a genuine, schema-validated implementation of
+ * the real "Legal Context Protocol" open standard (legalcontextprotocol.org,
+ * launched June 2026 by the AAA + Integra Ledger, with SDF as a founding
+ * contributor) — see `packages/shared/src/lcp/types.ts` for the field-by-field
+ * mapping. Deliberately still NOT served at the standard's own reserved path
+ * (`/.well-known/legal-context.json`) — that path resolves per-*domain*, and
+ * Contextio is multi-tenant (many tenant domains, each with their own
+ * document); serving at the reserved path on Contextio's own domain would
+ * incorrectly imply Contextio itself, rather than each tenant, is the party
+ * the terms bind.
  */
 export function wellKnownRouter(): Router {
   const router = Router();
@@ -93,6 +100,21 @@ export function wellKnownRouter(): Router {
     } catch (e) {
       next(e);
     }
+  });
+
+  /**
+   * The actual, standalone, downloadable Terms of Service — what `terms` in
+   * the LCP document points to, and what `atrHash` is a SHA-256 of. Serving
+   * raw markdown (not a rendered page) is a spec requirement: "MUST return a
+   * standalone, downloadable file... not a webpage section or dynamically
+   * rendered content" (legalcontextprotocol.org/standard). The human-facing
+   * translated version lives at `/legal/terms` on the web app (EN/ES/PT); this
+   * is the single canonical (English) source both are derived from.
+   */
+  router.get("/contextio-terms.md", (_req, res) => {
+    res.setHeader("content-type", "text/markdown; charset=utf-8");
+    res.setHeader("cache-control", "public, max-age=3600");
+    res.send(CANONICAL_TERMS_MARKDOWN);
   });
 
   return router;

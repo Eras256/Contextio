@@ -1,6 +1,6 @@
 {
   "name": "contextio-sdk",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Client SDK for Contextio — agentic treasury & payroll on Stellar. Typed API client, Stellar wallet sign-in (SEP-53), and Legal Context Protocol (LCP) hashing/verification.",
   "license": "Apache-2.0",
   "type": "module",
