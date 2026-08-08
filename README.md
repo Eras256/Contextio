@@ -36,7 +36,7 @@ external audit. All code in this monorepo is original.
 | DeFindex vault (real yield) | [`CDR4WR…P4UJGTHS` ↗](https://stellar.expert/explorer/testnet/contract/CDR4WRWLHN2KNAEWT4ZFOL42WDQAHF3N7TLYB7QA5IORUS7XP4UJGTHS) |
 | Reflector price oracle (SEP-40) | [`CCYOZJ…OMJRN63` ↗](https://stellar.expert/explorer/testnet/contract/CCYOZJCOPG34LLQQ7N24YXBM7LL62R7ONMZ3G6WZAAYPB5OYKOMJRN63) · live at [`/api/v1/public/oracle` ↗](https://contextio-api.fly.dev/api/v1/public/oracle) |
 | Self-hosted Anchor Platform (SEP-1/10/31/38) | app **`contextio-anchor-platform`** — real protocol capability, deliberately never connected to a bank account (see [Mainnet](#mainnet--live-real-and-deliberately-narrow) for why) |
-| Client SDK (npm) | **`contextio-sdk`** — `npm i contextio-sdk` (currently `0.2.0` on the registry — `packages/sdk/package.json` is ahead at `0.3.0` pending a republish) |
+| Client SDK (npm) | **`contextio-sdk`** — `npm i contextio-sdk` (`0.3.0`, published 2026-08-06 with the real Level-4 LCP schema — types now match what the API actually returns) |
 | Demo video | https://youtu.be/JI7KpNQMo0A |
 
 Connect Freighter (network toggle defaults to **Testnet**) at the web app →
