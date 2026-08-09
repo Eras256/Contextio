@@ -311,7 +311,11 @@ these in [.github/workflows/ci.yml](.github/workflows/ci.yml).
   server-only. Realtime subscriptions are RLS-authorized with the session JWT.
 
 See [docs/SCF-INTEGRATION.md](docs/SCF-INTEGRATION.md) and
-[apps/api/README.md](apps/api/README.md) for the API surface.
+[apps/api/README.md](apps/api/README.md) for the API surface. See
+[docs/PRIOR-ART.md](docs/PRIOR-ART.md) for how Contextio compares to other
+funded Stellar projects in payroll and treasury automation — named
+competitors, verified against their own sites, with an honest account of
+which differences are architectural and which are just naming.
 
 ## What's real today — verifiable on-chain
 

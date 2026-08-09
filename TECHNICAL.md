@@ -8,6 +8,7 @@
 - **Self-hosted Anchor Platform (SEP-1/10/31/38, testnet-only by design):** https://contextio-anchor-platform.fly.dev/.well-known/stellar.toml
 - **Repo:** https://github.com/Eras256/Contextio
 - **Demo:** https://youtu.be/JI7KpNQMo0A
+- **Competitive positioning:** [docs/PRIOR-ART.md](docs/PRIOR-ART.md) — named funded Stellar neighbors in payroll and treasury automation, verified live, with an honest account of which claimed differences hold up and which are shared with at least one other project
 
 ---
 
