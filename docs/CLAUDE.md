@@ -33,6 +33,12 @@ pnpm dev:worker # Agent loop / scheduler (needs the API running)
 All apps run in deterministic mock mode by default with no external
 credentials configured, so the full stack works offline.
 
+```bash
+supabase start        # local dockerized Supabase
+pnpm supabase:reset    # reset local DB (migrations + seed)
+# or: supabase db reset
+```
+
 ## 2. Testing — required before anything is called done
 
 ```bash
@@ -66,7 +72,16 @@ against a real contract), not just inferred from reading the code.
    the API with the internal secret, so RBAC, audit logging, and the Legal
    Context Protocol gate apply identically whether the caller is the
    autonomous agent or a human operator.
-2. **Non-custodial is a structural invariant, not a setting.** A process
+2. **Auth and DB access follow the same split everywhere.** Wallet auth is
+   Sign In With Stellar (SEP-53) — ed25519 challenge/verify in
+   `apps/api/src/http/routes/auth.ts`; session tokens verify via the legacy
+   HS256 secret or asymmetric JWKS (ES256) against the Supabase pool.
+   `apps/web` uses the Supabase anon client, subject to Row Level Security;
+   `apps/api` uses the service-role client to bypass RLS for controlled,
+   audited writes — every write it makes on a tenant's behalf is recorded to
+   `audit_logs`. Don't give the web app the service-role key, and don't have
+   the API write tenant data without an audit record.
+3. **Non-custodial is a structural invariant, not a setting.** A process
    configured for mainnet (`STELLAR_NETWORK=mainnet`) refuses to boot at all
    if a signer secret (`STELLAR_SERVICE_SECRET`, `BLEND_SIGNER_SECRET`) is
    present — `assertMainnetHasNoHotKey` in `packages/config/src/env.ts`,
@@ -77,11 +92,11 @@ against a real contract), not just inferred from reading the code.
    platform can hold a key capable of moving a client's funds. Don't add one,
    and don't relax the guard to special-case around it without treating that
    as a security-relevant decision, not a config tweak.
-3. **State-changing treasury/payroll endpoints require a valid Legal Context
+4. **State-changing treasury/payroll endpoints require a valid Legal Context
    Protocol binding.** Return **HTTP 412** if a legal context isn't published
    or a required consent is missing — this is the enforcement mechanism for
    consent, not a decorative header.
-4. **New Postgres tables get Row Level Security policies.** No table holding
+5. **New Postgres tables get Row Level Security policies.** No table holding
    tenant data ships without RLS from the migration that creates it.
 
 ## 5. Dependencies and prior art
