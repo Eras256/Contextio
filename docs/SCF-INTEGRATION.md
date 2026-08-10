@@ -1,43 +1,89 @@
-# SCF Integration Track mapping
+# Stellar Integration Plan — SCF Build, Integration Track
 
-How Contextio aligns with Stellar Community Fund **Integration Track** expectations.
+Contextio integrates six building blocks from the official SCF Integration
+List. This document states, for each one, what it does in the product, what
+works today (verified live, not aspirational), and what this award funds.
 
-| Expectation | How Contextio meets it |
-| --- | --- |
-| Integrates ≥ 1 Stellar building block | **Four**: Soroban contracts, anchors (SEP-24/31), DeFindex vaults, Blend pools. |
-| Clear user & market | LATAM SMBs/startups paying cross-border teams in BR/AR/CO; digital-dollar treasury + local-rail payroll. |
-| Working testnet demo | End-to-end flow runs on testnet; deterministic mock fallbacks make it fully demoable offline. |
-| Production-grade architecture | pnpm monorepo, type-safe config, RBAC, audit logging, CI, Dockerized Fly.io deploy, RLS. |
-| Compliance / trust | **Legal Context Protocol** binds terms, consent, jurisdiction & dispute channels to every agentic transaction. |
-| Non-custodial design | Keys stay with the company; the agent executes only within signed, on-chain-enforced limits. |
+Our own Soroban contracts (`treasury`, `payroll`) and the Stellar SDK/RPC are
+how we build — the tools every Soroban app uses, not chosen Integration List
+building blocks. No part of this budget is attributed to them. Reflector
+(SEP-40 price oracle) is real and live in the product (`GET /api/v1/public/oracle`,
+verified against both testnet and mainnet oracle contracts) but is likewise not
+on the Integration List and isn't counted as one of the six below.
 
-## Stellar building blocks used
+## The six building blocks
 
-- **Soroban smart contracts** — `treasury` and `payroll` crates settle agentic
-  actions and emit LCP-bound events; balance invariants + run idempotency enforced
-  on-chain.
-- **Anchors (SEP-24/31)** — modeled per payroll line for digital-dollar
-  on/off-ramp to PIX, Transferencias 3.0, and Bre-B.
-- **DeFindex** — RWA / CETES yield vaults; deposit/withdraw + strategy metadata.
-- **Blend** — USDC supply yield via lending pools (testnet contracts).
-- **Stellar SDK / RPC** — transaction build → simulate/prepare → sign → submit →
-  poll, plus contract event streaming (`packages/shared/src/stellar`).
+| Building block | Category | Status today | Funded work | Tranche |
+| --- | --- | --- | --- | --- |
+| Blend v2 | DeFi — lending | Live on testnet | Production hardening, mainnet migration post-audit | 1 |
+| DeFindex | DeFi — vaults | Live on testnet | Production hardening, mainnet migration post-audit | 1 |
+| Freighter Connect | Wallet | Live | Every agent action routed through self-custody signing, no execution path that bypasses it | 1 |
+| Stellar Wallets Kit | Wallet | Live | Multi-wallet support (Freighter/xBull/Albedo/Lobstr) for operators | 1 |
+| Anchor Platform | On/off-ramp | Self-hosted instance live on testnet (real SEP-1/10/31/38; SEP-24 still via SDF's reference anchor) | Enable SEP-24 on our own instance, close the SEP-31 transaction lifecycle, connect to a licensed off-ramp partner for real settlement | 2 |
+| Stellar Disbursement Platform | Payments | Not started | Replaces the current raw Horizon batch-payment rail with multi-recipient USDC disbursement, per-employee status tracking and receipts | 2 |
 
-## For judges — where to look
+### Blend v2 — treasury yield
+What it does: idle USDC is supplied to Blend lending pools; the agent decides
+allocation, never a human. Today: live on testnet — real positions, and the
+live 24/7 agent's Blend supply/withdraw signs through a policy-gated Smart
+Account (OpenZeppelin Stellar Smart Accounts), not a raw hot key, verified
+with real confirmed transactions. Funded work: mainnet migration once the
+Soroban contracts clear external audit (Soroban Audit Bank is the intended
+path), monitoring, and a public proof endpoint (already live at
+`/api/v1/public/oracle` and `/public/activity` for the pieces that don't need
+the audit gate).
 
-- Architecture overview → [ARCHITECTURE.md](ARCHITECTURE.md) and the web Overview diagram.
-- API surface → [apps/api/README.md](../apps/api/README.md).
-- Smart contract interfaces → [contracts/README.md](../contracts/README.md).
-- LCP document (live) → `/.well-known/contextio-legal-context.json` (served by the API).
-- LCP implementation → [packages/shared/src/lcp](../packages/shared/src/lcp).
-- Customer discovery → [customer-discovery.md](customer-discovery.md) (to be filled in).
+### DeFindex — yield vaults
+What it does: second venue for idle treasury, with strategy metadata driving
+allocation. Today: live vault on testnet, TVL and APY exposed at
+`/api/v1/public/defindex`. Funded work: the same Smart-Account signing
+migration Blend already has (DeFindex still signs directly today) and the same
+mainnet-post-audit path.
 
-## Roadmap beyond the hackathon
+### Freighter Connect and Stellar Wallets Kit — self-custody signing
+What they do: the company signs; the agent proposes. Keys never leave the
+operator's own wallet — verified structurally, not just by policy: a mainnet
+process refuses to boot at all if a signer secret is configured
+(`assertMainnetHasNoHotKey`, `packages/config/src/env.ts`, tested). Today:
+live on both testnet and mainnet. Funded work: extending the same enforced
+self-custody path to the remaining testnet-only flows (autonomous Blend/
+DeFindex rebalancing) once the audit unblocks a mainnet-safe signing model
+for them.
 
-1. Wire specific LATAM anchors (Brazil/Argentina/Colombia) for real on/off-ramps.
-2. Move the agent service account to a multisig / smart account; timelocked upgrades.
-3. Replace deterministic FX/yield mocks with on-chain oracles (e.g. Reflector) and
-   licensed FX feeds.
-4. Plug an external AI model into `AgentService.plan()` for richer proposals,
-   keeping the deterministic risk constraints and LCP gate as guardrails.
-5. Distributed worker (queue + leader election) for multi-machine scale.
+### Anchor Platform — local-rail off-ramp
+What it does: an employee receives local currency, not USDC they cannot spend.
+Today: **a real, self-hosted deployment of SDF's own `stellar/anchor-platform`**
+(not the SDF reference anchor, our own SEP-1 identity and infrastructure) —
+live on testnet with confirmed real SEP-1 (`stellar.toml`), SEP-10 (signed
+challenge), SEP-31 (`/sep31/info`, real `receive` config for native/BRL/ARS/COP
+with PIX/Transferencias 3.0/Bre-B funding methods), and SEP-38 (`/sep38/prices`,
+`/sep38/price`, all four currencies self-consistent). SEP-24 isn't enabled on
+this instance yet — that flow still runs against SDF's public reference anchor
+today (`GET /api/v1/public/anchor`). Funded work: SEP-24 on our own instance,
+closing the SEP-31 transaction lifecycle (JSON-RPC report-back), and — the
+part that's a business relationship, not code — connecting to a licensed local
+off-ramp partner so a SEP-31 payment actually settles in fiat. (BlindPay is the
+researched candidate: real Stellar support since May 2025, an unsigned-XDR
+payout flow that matches this project's non-custodial model exactly, but no
+account or API key exists yet.)
+
+### Stellar Disbursement Platform — payroll at scale
+What it does: replaces the current raw Horizon batch-payment rail
+(`StellarClient.sendPayments`, already settling real USDC payroll — see the
+verified example in the README) with SDP's purpose-built multi-recipient
+disbursement, per-employee status tracking, and receipts. Today: not started —
+this is real, funded, forward work, not something already quietly built.
+Funded work: full SDP integration (dashboard + core API + transaction-
+submission service) with LCP-bound run records written the same way the
+current payroll contract already does.
+
+## What this replaces
+
+This document previously stated "Four" building blocks (Soroban contracts,
+anchors, DeFindex, Blend) and framed itself as hackathon judging material
+("For judges," "Roadmap beyond the hackathon"). Two problems with that
+version, corrected here: it counted Soroban contracts as a chosen Integration
+List item when they're the platform Contextio's own code runs on, not a
+building block being integrated; and it never mentioned the Stellar
+Disbursement Platform at all despite SDP being a real, named part of the
+funded plan.
