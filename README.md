@@ -414,14 +414,14 @@ A team building for LATAM, two of them Stellar Ambassadors:
   World Cup MX 2026; ETH Uruguay & ETH MX hackathon winner.
 - **Monserrat Mendoza (Monse)** — Cofounder & COO · **Stellar México Ambassador**.
   Leads product, UX/UI, regulatory/compliance, and institutional & commercial relations
-  (SDF, Bitso, investors). SCF Kickstart co-applicant (95/100 readiness); 3rd place
-  Fintech World Cup MX 2026.
+  (SDF, Bitso, investors). SCF Kickstart co-applicant; 3rd place Fintech World Cup MX 2026.
 - **Gonzalo Chacón** — Cofounder & CCO. Program & go-to-market: 14+ years of
   enterprise delivery (Senior PM @ UST), MBA in finance, Scrum Master; leads
   commercial development and the in-person pitch across BR/AR/CO.
 
-All three are **SDF SCALE** graduates and **DoraHacks Instaward** winners. Gio & Monse
-co-created **[Nirium](https://nirium.xyz)** (Impacta · BBVA Open Deal).
+Gio & Monse co-created **[Nirium](https://nirium.xyz)** (Impacta · BBVA Open Deal) —
+SDF SCALE graduates and DoraHacks Instaward winners through that project, before
+starting Contextio.
 
 ## Customer discovery
 
@@ -460,6 +460,10 @@ cargo fmt --all -- --check && cargo clippy --target wasm32-unknown-unknown -- -D
 
 **Security**: please report vulnerabilities privately to the maintainers rather
 than opening a public issue.
+
+**AI assistance**: this repository is built with AI assistance — see
+[docs/AI-USAGE.md](docs/AI-USAGE.md) for what's disclosed, what never gets
+asserted without a human confirming it directly, and the commit-trailer policy.
 
 ## License
 
