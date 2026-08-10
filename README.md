@@ -420,8 +420,8 @@ A team building for LATAM, two of them Stellar Ambassadors:
   commercial development and the in-person pitch across BR/AR/CO.
 
 Gio & Monse co-created **[Nirium](https://nirium.xyz)** (Impacta · BBVA Open Deal) —
-SDF SCALE graduates and DoraHacks Instaward winners through that project, before
-starting Contextio.
+SDF SCALE graduates and SCF Instaward winners — earned at Alebrije/SCALE
+through that project — before starting Contextio.
 
 ## Customer discovery
 
