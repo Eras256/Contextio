@@ -413,8 +413,8 @@ A team building for LATAM, two of them Stellar Ambassadors:
   SDKs, and the "LLM proposes, the contract decides" security pattern. 3rd place Fintech
   World Cup MX 2026; ETH Uruguay & ETH MX hackathon winner.
 - **Monserrat Mendoza (Monse)** — Cofounder & COO · **Stellar México Ambassador**.
-  Leads product, UX/UI, regulatory/compliance, and institutional & commercial relations
-  (SDF, Bitso, investors). SCF Kickstart co-applicant; 3rd place Fintech World Cup MX 2026.
+  Leads operations, product, and UX/UI. SCF Kickstart co-applicant; 3rd place
+  Fintech World Cup MX 2026.
 - **Gonzalo Chacón** — Cofounder & CCO. Program & go-to-market: 14+ years of
   enterprise delivery (Senior PM @ UST), MBA in finance, Scrum Master; leads
   commercial development and the in-person pitch across BR/AR/CO.
