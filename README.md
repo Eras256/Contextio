@@ -464,6 +464,8 @@ than opening a public issue.
 **AI assistance**: this repository is built with AI assistance — see
 [docs/AI-USAGE.md](docs/AI-USAGE.md) for what's disclosed, what never gets
 asserted without a human confirming it directly, and the commit-trailer policy.
+Engineering rules (build/test commands, code conventions, the non-custodial
+invariants as hard requirements) are in [docs/CLAUDE.md](docs/CLAUDE.md).
 
 ## License
 

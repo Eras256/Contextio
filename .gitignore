@@ -49,11 +49,15 @@ desktop.ini
 # Fly.io
 .fly/
 
-# Local AI assistant files
+# Local AI assistant files (private — SCF/business strategy, unreleased
+# competitive analysis, third-party names). The public engineering rules at
+# docs/CLAUDE.md are a separate, from-scratch file and are explicitly
+# un-ignored below — they carry no business content by design.
 claude.md
 CLAUDE.md
 SKILL.md
 Memory.md
+!docs/CLAUDE.md
 
 
 # Vercel
