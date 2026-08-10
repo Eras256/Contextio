@@ -406,7 +406,7 @@ standard for accountable on-chain agents.
 
 ## Team
 
-A team of **Stellar Ambassadors** building for LATAM:
+A team building for LATAM, two of them Stellar Ambassadors:
 
 - **Giovanny Amador (Gio)** — Founder & lead architect · **Stellar México Ambassador**.
   Built the full technical protocol: Soroban contracts, the autonomous agent, TS/Python
@@ -416,9 +416,9 @@ A team of **Stellar Ambassadors** building for LATAM:
   Leads product, UX/UI, regulatory/compliance, and institutional & commercial relations
   (SDF, Bitso, investors). SCF Kickstart co-applicant (95/100 readiness); 3rd place
   Fintech World Cup MX 2026.
-- **Gonzalo Chacón** — Cofounder & CCO · **Stellar Costa Rica Ambassador**. Program &
-  go-to-market: 14+ years of enterprise delivery (Senior PM @ UST), MBA in finance,
-  Scrum Master; leads commercial development and the in-person pitch across BR/AR/CO.
+- **Gonzalo Chacón** — Cofounder & CCO. Program & go-to-market: 14+ years of
+  enterprise delivery (Senior PM @ UST), MBA in finance, Scrum Master; leads
+  commercial development and the in-person pitch across BR/AR/CO.
 
 All three are **SDF SCALE** graduates and **DoraHacks Instaward** winners. Gio & Monse
 co-created **[Nirium](https://nirium.xyz)** (Impacta · BBVA Open Deal).
