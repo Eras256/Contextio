@@ -50,11 +50,11 @@ To exercise these rights, please contact our legal email address: legal@contexti
     {
       id: "collection",
       title: "1. Recolección de Datos",
-      content: `Contextio es una plataforma tecnológica sin custodia (y no un proveedor de servicios financieros, fintech, banco, entidad de crédito o custodio). Recopilamos metadatos públicos y relacionados con la empresa únicamente para facilitar los flujos de trabajo descentralizados de software de tesorería y nómina. Procesamos:
+      content: `Contextio es una plataforma tecnológica sin custodia (y no un proveedor de servicios financieros, fintech, banco, entidad de crédito o custodio). Recopilamos metadatos públicos y relacionados con la empresa únicamente para facilitar los flujos de trabajo descentralizados de software de tesorería y dispersión de pagos. Procesamos:
 - Direcciones públicas de Stellar Wallet.
 - Detalles de la empresa (nombre legal, dominio, país e ID de registro local).
 - Direcciones de correo electrónico de contacto proporcionadas en la configuración del Protocolo de Contexto Legal (LCP).
-- Hashes de transacciones sin custodia, posiciones líquidas e historial de ejecuciones de nómina.
+- Hashes de transacciones sin custodia, posiciones líquidas e historial de ejecuciones de dispersión.
 NO recopilamos, almacenamos ni transmitimos claves criptográficas privadas, frases semilla ni credenciales de seguridad sensibles.`,
     },
     {
@@ -62,7 +62,7 @@ NO recopilamos, almacenamos ni transmitimos claves criptográficas privadas, fra
       title: "2. Finalidad del Procesamiento",
       content: `Sus datos se procesan exclusivamente para:
 - Autenticar y establecer sesiones basadas en wallets (a través del desafío/verificación de SEP-53).
-- Realizar un seguimiento de los balances de la empresa, posiciones de rendimiento e historial de nómina.
+- Realizar un seguimiento de los balances de la empresa, posiciones de rendimiento e historial de dispersión.
 - Ejecutar conversiones horarias locales y trazas de consola estructuradas para los registros de auditoría.
 - Sincronizar paneles de la interfaz de usuario en tiempo real a través de Supabase Postgres.
 Todos los datos se procesan bajo las leyes de protección de datos correspondientes (como la LGPD en Brasil, la Ley 25.326 en Argentina y la Ley 1581 en Colombia).`,
@@ -70,7 +70,7 @@ Todos los datos se procesan bajo las leyes de protección de datos correspondien
     {
       id: "blockchain",
       title: "3. Transparencia e Irreversibilidad de Blockchain",
-      content: `Tenga en cuenta que todas las transacciones liquidadas en la red Stellar (incluidas las ejecuciones de nómina y los rebalanceos de tesorería) son públicas, transparentes e irreversibles. Las direcciones de billetera y los hashes de transacción asociados con sus operaciones se registrarán de forma permanente en el ledger. Estas entradas no se pueden modificar ni eliminar debido a la naturaleza descentralizada de la tecnología blockchain.`,
+      content: `Tenga en cuenta que todas las transacciones liquidadas en la red Stellar (incluidas las ejecuciones de dispersión y los rebalanceos de tesorería) son públicas, transparentes e irreversibles. Las direcciones de billetera y los hashes de transacción asociados con sus operaciones se registrarán de forma permanente en el ledger. Estas entradas no se pueden modificar ni eliminar debido a la naturaleza descentralizada de la tecnología blockchain.`,
     },
     {
       id: "sharing",

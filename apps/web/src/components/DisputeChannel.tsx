@@ -133,7 +133,7 @@ const CONTENT: Record<Locale, Record<CountryCode, DisputeContent>> = {
         "El laudo arbitral será definitivo, vinculante y hará tránsito a cosa juzgada bajo la Ley 1563 de 2012 de Colombia."
       ],
       arbitrationRules: "Reglamento de Arbitraje",
-      arbitrationRulesDesc: "Sujeto al Reglamento de Arbitraje de la Cámara de Comercio de Bogotá. El sometimiento voluntario al arbitraje es legalmente vinculante para operaciones de nómina y tesorería."
+      arbitrationRulesDesc: "Sujeto al Reglamento de Arbitraje de la Cámara de Comercio de Bogotá. El sometimiento voluntario al arbitraje es legalmente vinculante para operaciones de dispersión y tesorería."
     },
     ch: {
       title: "Canal de Resolución de Disputas y Foro de Arbitraje — Suiza (EMEA)",

@@ -42,7 +42,7 @@ const SECTIONS = {
     {
       id: "scope",
       title: "1. Alcance de los Servicios y Estado de Proveedor de Tecnología",
-      content: `Contextio es una plataforma tecnológica sin custodia (y no un proveedor de servicios financieros, fintech, banco, entidad de crédito o custodio) que opera en la red Stellar. Proporcionamos herramientas de software puramente técnicas que permiten a las empresas configurar asignaciones de tesorería automatizadas (por ejemplo, a través de los protocolos Blend y DeFindex) y ejecutar flujos de nómina localizados en América Latina (incluyendo Brasil, Argentina y Colombia). La plataforma actúa como un asistente inteligente que propone movimientos basados en parámetros de configuración; sin embargo, la ejecución final y la autorización criptográfica siempre permanecen con las claves del operador del inquilino.`,
+      content: `Contextio es una plataforma tecnológica sin custodia (y no un proveedor de servicios financieros, fintech, banco, entidad de crédito o custodio) que opera en la red Stellar. Proporcionamos herramientas de software puramente técnicas que permiten a las empresas configurar asignaciones de tesorería automatizadas (por ejemplo, a través de los protocolos Blend y DeFindex) y ejecutar flujos de dispersión de pagos localizados en América Latina (incluyendo Brasil, Argentina y Colombia). La plataforma actúa como un asistente inteligente que propone movimientos basados en parámetros de configuración; sin embargo, la ejecución final y la autorización criptográfica siempre permanecen con las claves del operador del inquilino.`,
     },
     {
       id: "self-custody",
