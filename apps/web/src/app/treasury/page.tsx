@@ -103,7 +103,7 @@ export default function TreasuryPage() {
                   <tr key={i} className="table-row">
                     <td className="py-2 font-medium text-white">{p.asset}</td>
                     <td className="py-2 text-slate-300">{tr(PLACE_KEY[p.strategy] ?? "pages.treasury.placeLiquidity")}</td>
-                    <td className="py-2 text-right text-slate-300">{p.apyBps ? bps(p.apyBps) : "—"}</td>
+                    <td className="py-2 text-right text-slate-300">{p.apyBps ? bps(p.apyBps) : "-"}</td>
                     <td className="py-2 text-right font-medium text-white">{usdBase(p.amountBaseUnits)}</td>
                   </tr>
                 ))}
@@ -136,17 +136,17 @@ export default function TreasuryPage() {
         <Card>
           <h3 className="mb-1 text-sm font-semibold text-white">{tr("pages.treasury.rulesTitle")}</h3>
           <p className="mb-4 text-xs text-slate-400">{tr("pages.treasury.rulesBody")}</p>
-          <Rule k={tr("pages.treasury.ruleFloor")} v={cfg ? usdBase(cfg.minLiquidityBaseUnits) : "—"} />
-          <Rule k={tr("pages.treasury.ruleMaxYield")} v={cfg ? bps(cfg.maxYieldBps) : "—"} />
-          <Rule k={tr("pages.treasury.ruleSensitivity")} v={cfg ? `${cfg.volatilitySensitivity} / 100` : "—"} />
+          <Rule k={tr("pages.treasury.ruleFloor")} v={cfg ? usdBase(cfg.minLiquidityBaseUnits) : "-"} />
+          <Rule k={tr("pages.treasury.ruleMaxYield")} v={cfg ? bps(cfg.maxYieldBps) : "-"} />
+          <Rule k={tr("pages.treasury.ruleSensitivity")} v={cfg ? `${cfg.volatilitySensitivity} / 100` : "-"} />
           {/* Plain text codes, no flag emoji: relies on OS-level flag-glyph
               support that's inconsistent across platforms (esp. Windows
-              without certain font packages) — was rendering as a
+              without certain font packages). Was rendering as a
               visually-duplicated "BR BR" when the glyph fell back to its
               literal regional-indicator letters instead of a flag icon. */}
-          <Rule k="BR" v={cfg ? bps(cfg.countryLimitsBps.BR ?? 0) : "—"} />
-          <Rule k="AR" v={cfg ? bps(cfg.countryLimitsBps.AR ?? 0) : "—"} />
-          <Rule k="CO" v={cfg ? bps(cfg.countryLimitsBps.CO ?? 0) : "—"} />
+          <Rule k="BR" v={cfg ? bps(cfg.countryLimitsBps.BR ?? 0) : "-"} />
+          <Rule k="AR" v={cfg ? bps(cfg.countryLimitsBps.AR ?? 0) : "-"} />
+          <Rule k="CO" v={cfg ? bps(cfg.countryLimitsBps.CO ?? 0) : "-"} />
         </Card>
 
         <Card className="lg:col-span-2">
@@ -171,7 +171,7 @@ export default function TreasuryPage() {
                     rel="noreferrer"
                     className="mt-1 inline-block font-mono text-xs text-brand hover:underline"
                   >
-                    tx {shortHash(d.stellarTxHash, 10, 6)} ↗
+                    tx {shortHash(d.stellarTxHash, 10, 6)}
                   </a>
                 ) : d.stellarTxHash ? (
                   <p className="mt-1 font-mono text-xs text-slate-500 break-all">{d.stellarTxHash}</p>

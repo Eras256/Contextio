@@ -9,11 +9,11 @@ import { useT } from "@/lib/i18n";
 import { useNetwork } from "@/lib/network";
 
 /**
- * Manual treasury controls for the dashboard — everything the autonomous agent
- * does, available by hand: activate/deactivate the agent, move capital between
- * liquidity and a yield venue (real on-chain rebalance), tune the risk rules,
- * and register a yield vault. All of it hits the same audited, LCP-bound API
- * the agent uses.
+ * Manual treasury controls for the dashboard: everything the autonomous agent
+ * does, available by hand. Activate or deactivate the agent, move capital
+ * between liquidity and a yield venue (real on-chain rebalance), tune the
+ * risk rules, and register a yield vault. All of it hits the same audited,
+ * LCP-bound API the agent uses.
  */
 export function TreasuryControls({
   auth,
@@ -28,7 +28,7 @@ export function TreasuryControls({
   const [toggling, setToggling] = useState(false);
   const [toggleMsg, setToggleMsg] = useState<string | null>(null);
 
-  // useState seeds from `config` on first render — but the snapshot is still
+  // useState seeds from `config` on first render, but the snapshot is still
   // null then, so re-sync once the server value arrives (otherwise the toggle
   // shows the default "on" forever, even when the DB says off).
   const cfgEnabled = config?.agentEnabled;
@@ -40,8 +40,8 @@ export function TreasuryControls({
   const [vaults, setVaults] = useState<DeployedVault[]>([]);
   useEffect(() => setVaults(getVaults()), []);
 
-  // Remove a vault from this list. The on-chain vault is a Soroban contract — it
-  // can't be deleted, and it has no power over your wallet (self-custody), so
+  // Remove a vault from this list. The on-chain vault is a Soroban contract.
+  // It can't be deleted, and it has no power over your wallet (self-custody), so
   // there's nothing to revoke. DeFindex also rejects a null manager address, so
   // a true on-chain "renounce" isn't available; we just drop it from the list.
   const onRemoveVault = (v: DeployedVault) => {
@@ -58,17 +58,17 @@ export function TreasuryControls({
       const next = !agentEnabled;
       // SEP-53 consent: you sign the authorization with your own wallet.
       const message = [
-        "Contextio — Agent authorization",
+        "Contextio: Agent authorization",
         `Action: ${next ? "enable" : "disable"}`,
         `Address: ${address}`,
         `Issued: ${new Date().toISOString()}`,
         "This authorizes Contextio's agent to manage your treasury within your risk rules. It does not move funds.",
       ].join("\n");
-      setToggleMsg("Approve in your wallet…");
+      setToggleMsg("Approve in your wallet...");
       const signedMessage = await signWalletMessage(message, address);
       const r = await api.toggleAgent(auth, next, { address, message, signedMessage });
       setAgentEnabled(r.agentEnabled);
-      setToggleMsg(r.agentEnabled ? "Agent activated — signed by you." : "Agent paused — signed by you.");
+      setToggleMsg(r.agentEnabled ? "Agent activated. Signed by you." : "Agent paused. Signed by you.");
     } catch (e) {
       setToggleMsg(friendlyError(e instanceof Error ? e.message : String(e)));
     } finally {
@@ -81,7 +81,7 @@ export function TreasuryControls({
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-white">Manual controls</h3>
-          <p className="text-xs text-slate-400">Run the treasury by hand — same audited, on-chain API as the agent.</p>
+          <p className="text-xs text-slate-400">Run the treasury by hand, the same audited, on-chain API the agent uses.</p>
         </div>
       </div>
 
@@ -93,7 +93,9 @@ export function TreasuryControls({
             Autonomous agent
           </p>
           <p className="mt-0.5 text-xs text-slate-500">
-            {agentEnabled ? "Active — rebalances & lends 24/7 on its own." : "Paused — only manual actions run."}
+            {agentEnabled
+              ? "Active. Rebalances and lends 24/7 on its own. Blend lending runs through a policy-gated Smart Account with spending-limit caps, verified with real confirmed transactions."
+              : "Paused. Only manual actions run."}
           </p>
           {toggleMsg && <p className="mt-1 text-[11px] text-slate-400">{toggleMsg}</p>}
         </div>
@@ -136,7 +138,7 @@ function TxLink({ hash }: { hash: string }) {
   const network = useNetwork();
   return (
     <a href={txUrl(hash, network)} target="_blank" rel="noreferrer" className="font-mono text-brand hover:underline">
-      tx {hash.slice(0, 8)}…{hash.slice(-6)} ↗
+      tx {hash.slice(0, 8)}...{hash.slice(-6)}
     </a>
   );
 }
@@ -145,11 +147,11 @@ function TxLink({ hash }: { hash: string }) {
 function friendlyError(m: string): string {
   const s = m.toLowerCase();
   if (/declin|reject|cancel/.test(s)) return "Signature cancelled in your wallet.";
-  if (/txbadseq|bad.?seq/.test(s)) return "Network busy — a previous tx is still settling. Wait a few seconds and retry.";
+  if (/txbadseq|bad.?seq/.test(s)) return "Network busy. A previous tx is still settling. Wait a few seconds and retry.";
   if (/insufficientbalance|insufficient balance/.test(s)) return "Amount exceeds your position here. Try a smaller amount (e.g. withdraw a bit less than you supplied).";
   if (/trustline/.test(s)) return "Your wallet needs a trustline for this asset first.";
   if (/underfunded|txinsufficient/.test(s)) return "Your wallet doesn't have enough balance for this amount plus fees.";
-  return m.length > 180 ? `${m.slice(0, 180)}…` : m;
+  return m.length > 180 ? `${m.slice(0, 180)}...` : m;
 }
 
 const contractUrl = (a: string, network: string) =>
@@ -178,14 +180,14 @@ function DeployedVaults({
                 <p className="truncate text-sm font-medium text-white">{v.name}</p>
                 <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-brand">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand shadow-[0_0_6px_#22d3a5]" />
-                  DeFindex · {v.asset} · Blend
+                  DeFindex, {v.asset}, Blend
                 </p>
               </div>
               <button
                 onClick={() => onRemove(v)}
                 className="shrink-0 rounded px-1 text-slate-500 hover:text-white"
                 aria-label="Remove from list"
-                title="Remove from this list (the on-chain vault stays — it has no control over your wallet)"
+                title="Remove from this list. The on-chain vault stays, and it has no control over your wallet."
               >
                 ✕
               </button>
@@ -193,7 +195,7 @@ function DeployedVaults({
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/5 pt-2 text-[11px]">
               {v.address && (
                 <a href={contractUrl(v.address, network)} target="_blank" rel="noreferrer" className="font-mono text-accent hover:underline">
-                  vault {v.address.slice(0, 6)}…{v.address.slice(-4)} ↗
+                  vault {v.address.slice(0, 6)}...{v.address.slice(-4)}
                 </a>
               )}
               <TxLink hash={v.txHash} />
@@ -242,30 +244,30 @@ function RebalancePanel({ auth, address }: { auth: ApiAuth; address: string | nu
         acknowledgeTerms: true,
         jurisdictionAttestation: true,
       });
-      setMsg("Approve in your wallet…");
+      setMsg("Approve in your wallet...");
       const signed = await signWalletTransaction(xdr, address);
-      setMsg("Submitting…");
+      setMsg("Submitting...");
       const r = await api.submitMove(auth, signed);
       return r.txHash;
     };
 
     try {
-      setMsg("Preparing transaction…");
+      setMsg("Preparing transaction...");
       let txHash: string;
       try {
         txHash = await attempt();
       } catch (e) {
         const m = e instanceof Error ? e.message : String(e);
-        // Sequence race with a still-settling tx → re-prepare with a fresh seq (one retry).
+        // Sequence race with a still-settling tx: re-prepare with a fresh seq (one retry).
         if (/txbadseq|bad.?seq/i.test(m)) {
-          setMsg("A previous tx is still settling — retrying with a fresh sequence…");
+          setMsg("A previous tx is still settling. Retrying with a fresh sequence...");
           txHash = await attempt();
         } else {
           throw e;
         }
       }
       setTx(txHash);
-      setMsg("Signed by you — settled on-chain:");
+      setMsg("Signed by you. Settled on-chain:");
     } catch (e) {
       setMsg(friendlyError(e instanceof Error ? e.message : String(e)));
     } finally {
@@ -277,7 +279,7 @@ function RebalancePanel({ auth, address }: { auth: ApiAuth; address: string | nu
     <div className="rounded-xl border border-white/10 bg-ink-900/40 p-4">
       <p className="text-sm font-medium text-white">Move capital</p>
       <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
-        You sign with your own wallet — self-custody.
+        You sign with your own wallet. Self-custody.
         <Info text={t("glossary.selfCustody")} />
       </p>
 
@@ -287,8 +289,8 @@ function RebalancePanel({ auth, address }: { auth: ApiAuth; address: string | nu
           <Info text={venue === "defindex" ? t("glossary.defindex") : t("glossary.blend")} />
         </span>
         <select value={venue} onChange={(e) => setVenue(e.target.value as typeof venue)} className={selectCls}>
-          <option value="blend">Blend · lending</option>
-          <option value="defindex">DeFindex · XLM vault</option>
+          <option value="blend">Blend: lending</option>
+          <option value="defindex">DeFindex: XLM vault</option>
         </select>
       </label>
 
@@ -296,8 +298,8 @@ function RebalancePanel({ auth, address }: { auth: ApiAuth; address: string | nu
         <label className="mt-2 block text-[11px] text-slate-400">
           Asset
           <select value={asset} onChange={(e) => setAsset(e.target.value as typeof asset)} className={selectCls}>
-            <option value="XLM">XLM — works with your {network} balance</option>
-            <option value="USDC">USDC — needs trustline + balance</option>
+            <option value="XLM">XLM: works with your {network} balance</option>
+            <option value="USDC">USDC: needs trustline and balance</option>
           </select>
         </label>
       )}
@@ -327,14 +329,14 @@ function RebalancePanel({ auth, address }: { auth: ApiAuth; address: string | nu
           disabled={busy || !termsOk || !jurisdictionOk}
           className="btn-primary justify-center px-3 py-2 text-xs disabled:opacity-40"
         >
-          {busy ? "…" : "Aportar liquidez"}
+          {busy ? "..." : "Add liquidity"}
         </button>
         <button
           onClick={() => void move("out")}
           disabled={busy || !termsOk || !jurisdictionOk}
           className="btn-ghost justify-center px-3 py-2 text-xs disabled:opacity-40"
         >
-          {busy ? "…" : "Retirar capital"}
+          {busy ? "..." : "Withdraw capital"}
         </button>
       </div>
       {(msg || tx) && (
@@ -427,7 +429,7 @@ function RiskPanel({
       </div>
 
       <button onClick={() => void save()} disabled={busy} className="btn-primary mt-3 w-full justify-center px-3 py-2 text-xs disabled:opacity-40">
-        {busy ? "Saving…" : "Save risk rules"}
+        {busy ? "Saving..." : "Save risk rules"}
       </button>
       {msg && <p className="mt-2 break-words text-[11px] text-slate-400">{msg}</p>}
     </div>
@@ -460,17 +462,17 @@ function CreateVaultPanel({
     setMsg(null);
     setTx(null);
     try {
-      // Real factory deploy: build → sign in Freighter → submit. You own the vault.
-      setMsg("Preparing deploy…");
+      // Real factory deploy: build, sign in Freighter, submit. You own the vault.
+      setMsg("Preparing deploy...");
       const { xdr } = await api.prepareCreateVault(auth, { asset, name, address });
-      setMsg("Approve in your wallet…");
+      setMsg("Approve in your wallet...");
       const signed = await signWalletTransaction(xdr, address);
-      setMsg("Deploying vault on-chain…");
+      setMsg("Deploying vault on-chain...");
       const r = await api.submitMove(auth, signed);
       const vaultAddr = typeof r.returnValue === "string" ? r.returnValue : undefined;
       setTx(r.txHash);
       onCreated({ name, asset, address: vaultAddr, txHash: r.txHash, createdAt: new Date().toISOString() });
-      setMsg("Vault deployed — signed by you:");
+      setMsg("Vault deployed. Signed by you:");
     } catch (e) {
       setMsg(friendlyError(e instanceof Error ? e.message : String(e)));
     } finally {
@@ -483,7 +485,7 @@ function CreateVaultPanel({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-white">Vaults</p>
-          <p className="mt-0.5 text-xs text-slate-500">Deploy your own DeFindex vault (Blend yield strategy) — real factory deploy, signed by your wallet.</p>
+          <p className="mt-0.5 text-xs text-slate-500">Deploy your own DeFindex vault, a Blend yield strategy. Real factory deploy, signed by your wallet.</p>
         </div>
         <button onClick={() => setOpen((o) => !o)} className="btn-ghost px-3 py-1.5 text-xs">
           {open ? "Cancel" : "New vault"}
@@ -499,11 +501,11 @@ function CreateVaultPanel({
             className={selectCls}
           />
           <select value={asset} onChange={(e) => setAsset(e.target.value as "XLM" | "USDC")} className={selectCls}>
-            <option value="XLM">XLM · Blend strategy</option>
+            <option value="XLM">XLM: Blend strategy</option>
             <option value="USDC">USDC (no {network} strategy yet)</option>
           </select>
           <button onClick={() => void create()} disabled={busy} className="btn-primary justify-center px-3 py-2 text-xs disabled:opacity-40 sm:col-span-2">
-            {busy ? "…" : "Create vault"}
+            {busy ? "..." : "Create vault"}
           </button>
         </div>
       )}
