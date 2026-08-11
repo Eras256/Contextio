@@ -271,6 +271,30 @@ export async function fetchAiStatus(): Promise<AiStatus> {
   }
 }
 
+async function requestPublic<T>(path: string): Promise<T> {
+  const res = await fetch(`${resolveApiUrl()}/api/v1/public${path}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return (await res.json()) as T;
+}
+
+/**
+ * No-auth reads of the same demo tenant the Home live feed already shows
+ * (see apps/api/src/http/routes/public.ts). Lets /treasury, /payroll, and
+ * /agent render real data before a visitor connects a wallet, instead of a
+ * full-page connect gate. Never used for anything that writes.
+ */
+export const publicApi = {
+  treasury: () => requestPublic<TreasurySnapshot>("/treasury"),
+  payroll: () =>
+    requestPublic<{ employees: PayrollEmployee[]; obligations: Obligation[]; runs: PayrollRun[] }>("/payroll"),
+  employees: () => publicApi.payroll().then((r) => r.employees),
+  obligations: () => publicApi.payroll().then((r) => r.obligations),
+  runs: () => publicApi.payroll().then((r) => r.runs),
+  decisions: () =>
+    requestPublic<{ decisions: Decision[] }>("/activity").then((r) => r.decisions),
+  legal: () => requestPublic<LegalState>("/legal"),
+};
+
 export const apiBaseUrl = resolveApiUrl;
 
 // ── Wallet sign-in handshake (no bearer) ───────────────────────────────────

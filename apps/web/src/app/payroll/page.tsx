@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Card, DataBadge, SectionHeader, Skeleton, Stat } from "@/components/ui";
+import { Badge, Card, DataBadge, DemoDataNotice, SectionHeader, Skeleton, Stat } from "@/components/ui";
 import { COUNTRY_LABEL, RAIL_LABEL, fromBaseUnits, localDateTime, shortHash, usd, usdBase } from "@/lib/format";
-import { api, type PayrollEmployee, type TreasurySnapshot } from "@/lib/api";
+import { api, publicApi, type PayrollEmployee, type TreasurySnapshot } from "@/lib/api";
 import { useLiveData } from "@/lib/useLiveData";
 import { useT } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -24,34 +24,21 @@ export default function PayrollPage() {
   const tr = useT();
   const network = useNetwork();
   const { accessToken, tenantId, address, connect, connecting } = useAuth();
-  const employeesQ = useLiveData<PayrollEmployee[]>(api.employees, []);
-  const obligationsQ = useLiveData(api.obligations, []);
-  const treasuryQ = useLiveData(api.treasury, EMPTY_TREASURY);
-  const runsQ = useLiveData(api.runs, [], { realtimeTable: "payroll_runs" });
+  const employeesQ = useLiveData<PayrollEmployee[]>(api.employees, [], { publicFetcher: publicApi.employees });
+  const obligationsQ = useLiveData(api.obligations, [], { publicFetcher: publicApi.obligations });
+  const treasuryQ = useLiveData(api.treasury, EMPTY_TREASURY, { publicFetcher: publicApi.treasury });
+  const runsQ = useLiveData(api.runs, [], { realtimeTable: "payroll_runs", publicFetcher: publicApi.runs });
   const [running, setRunning] = useState(false);
   const [runMsg, setRunMsg] = useState<string | null>(null);
   const [confirmingRun, setConfirmingRun] = useState(false);
-
-  if (!accessToken) {
-    return (
-      <div className="space-y-8">
-        <SectionHeader
-          eyebrow={tr("pages.payroll.eyebrow")}
-          title={tr("pages.payroll.title")}
-          description={tr("pages.payroll.desc")}
-        />
-        <ConnectGate connect={connect} connecting={connecting} tr={tr} />
-      </div>
-    );
-  }
 
   const employees = employeesQ.data;
   const active = employees.filter((e) => e.active);
   const monthlyTotal = employees.reduce((acc, e) => acc + Number(e.salaryAmount || 0), 0);
   const next = obligationsQ.data[0];
   const required = next ? fromBaseUnits(next.requiredBaseUnits) : 0;
-  // FX cushion sized to the owner's own risk setting (volatility sensitivity 0–100),
-  // not a fixed magic number — ties the forecast to real config.
+  // FX cushion sized to the owner's own risk setting (volatility sensitivity
+  // 0 to 100), not a fixed magic number. Ties the forecast to real config.
   const sensitivity = treasuryQ.data.config?.volatilitySensitivity ?? 50;
   const buffer = required * (sensitivity / 100) * 0.15;
   const needed = required + buffer;
@@ -59,7 +46,7 @@ export default function PayrollPage() {
   const enough = ready >= needed;
   const nextDate = next
     ? new Date(next.nextRunAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })
-    : "—";
+    : "-";
 
   // Run a real payroll now: the treasury wallet settles USDC to each employee
   // on-chain (testnet 1:100 scaled). Surfaces the real reason on failure.
@@ -71,7 +58,7 @@ export default function PayrollPage() {
     try {
       const run = await api.runPayroll({ accessToken, tenantId }, next.scheduleId);
       setRunMsg(
-        `${tr("pages.payroll.runDone")}${run.stellarTxHash ? ` · tx ${shortHash(run.stellarTxHash, 8, 6)}` : ""}`,
+        `${tr("pages.payroll.runDone")}${run.stellarTxHash ? ` tx ${shortHash(run.stellarTxHash, 8, 6)}` : ""}`,
       );
     } catch (e) {
       setRunMsg(e instanceof Error ? e.message : String(e));
@@ -89,11 +76,21 @@ export default function PayrollPage() {
         action={<DataBadge live={employeesQ.live} loading={employeesQ.loading} />}
       />
 
+      {!accessToken && (
+        <DemoDataNotice
+          message={tr("pages.payroll.demoBanner")}
+          connect={connect}
+          connecting={connecting}
+          connectLabel={tr("auth.connect")}
+          connectingLabel={tr("auth.connecting")}
+        />
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card><Stat label={tr("pages.payroll.statPeople")} value={active.length} sub={tr("pages.payroll.statPeopleSub")} /></Card>
         <Card><Stat label={tr("pages.payroll.statMonthly")} value={usd(monthlyTotal)} sub={tr("pages.payroll.statMonthlySub")} /></Card>
         <Card><Stat label={tr("pages.payroll.statNext")} value={nextDate} sub={next?.scheduleName ?? tr("pages.payroll.nextNone")} /></Card>
-        <Card><Stat label={tr("pages.payroll.statNeeded")} value={next ? usd(needed) : "—"} sub={tr("pages.payroll.statNeededSub")} /></Card>
+        <Card><Stat label={tr("pages.payroll.statNeeded")} value={next ? usd(needed) : "-"} sub={tr("pages.payroll.statNeededSub")} /></Card>
       </div>
 
       {/* Team */}
@@ -129,7 +126,7 @@ export default function PayrollPage() {
               {employees.length === 0 && (
                 <tr>
                   <td colSpan={6} className="py-6 text-center text-slate-500">
-                    {employeesQ.loading ? "…" : tr("pages.payroll.teamEmpty")}
+                    {employeesQ.loading ? "..." : tr("pages.payroll.teamEmpty")}
                   </td>
                 </tr>
               )}
@@ -142,10 +139,12 @@ export default function PayrollPage() {
       <Card>
         <div className="mb-1 flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-white">{tr("pages.payroll.runsTitle")}</h3>
-          {/* Custodial "Pay now" needs a platform signer key — the mainnet API
+          {/* Custodial "Pay now" needs a platform signer key. The mainnet API
               never has one (see mainnet boot guard), so it can only ever work
-              on testnet. Payouts below is the mainnet-capable path. */}
-          {network === "testnet" && next?.scheduleId && (
+              on testnet. Payouts below is the mainnet-capable path. It also
+              needs a session: it settles from the signed-in tenant's own
+              treasury, not the public demo tenant a visitor is looking at. */}
+          {accessToken && network === "testnet" && next?.scheduleId && (
             <button
               onClick={() => setConfirmingRun(true)}
               disabled={running}
@@ -194,7 +193,7 @@ export default function PayrollPage() {
                   </span>
                   {run.lines && (
                     <span className="text-xs text-slate-500">
-                      · {run.lines.length} {tr("pages.payroll.runsPaid")}
+                      , {run.lines.length} {tr("pages.payroll.runsPaid")}
                     </span>
                   )}
                 </div>
@@ -206,17 +205,17 @@ export default function PayrollPage() {
                 {network === "testnet" && run.status === "completed" ? (
                   <span className="font-mono text-slate-400">
                     <span className="font-semibold text-brand">{usd(Number(run.totalAmount || 0) / 100)} {run.asset}</span>{" "}
-                    · {tr("pages.payroll.runsScaledNote")}
+                    , {tr("pages.payroll.runsScaledNote")}
                   </span>
                 ) : (
                   <span />
                 )}
                 {run.stellarTxHash && !run.stellarTxHash.startsWith("sim:") ? (
                   <a href={txUrl(run.stellarTxHash, network)} target="_blank" rel="noreferrer" className="font-mono text-accent hover:underline">
-                    tx {shortHash(run.stellarTxHash, 8, 6)} ↗
+                    tx {shortHash(run.stellarTxHash, 8, 6)}
                   </a>
                 ) : (
-                  <span className="font-mono text-slate-500 break-all">{run.stellarTxHash ?? "—"}</span>
+                  <span className="font-mono text-slate-500 break-all">{run.stellarTxHash ?? "-"}</span>
                 )}
               </div>
             </div>
@@ -238,17 +237,24 @@ export default function PayrollPage() {
         />
       )}
 
-      {/* Self-custody Payouts — the mainnet-capable path (see boot guard). */}
-      {next?.scheduleId && <PayoutsPanel auth={{ accessToken, tenantId: tenantId! }} address={address} scheduleId={next.scheduleId} network={network} />}
+      {/* Self-custody Payouts: the mainnet-capable path (see boot guard). Needs
+          a session, since it prepares and submits transactions for the
+          signed-in tenant's own treasury. */}
+      {next?.scheduleId &&
+        (accessToken && tenantId ? (
+          <PayoutsPanel auth={{ accessToken, tenantId }} address={address} scheduleId={next.scheduleId} network={network} />
+        ) : (
+          <ConnectGate connect={connect} connecting={connecting} tr={tr} />
+        ))}
 
       {/* Funding */}
       <Card className="max-w-xl">
         <h3 className="mb-1 text-sm font-semibold text-white">{tr("pages.payroll.fundTitle")}</h3>
         <p className="mb-4 text-xs text-slate-400">{tr("pages.payroll.fundBody")}</p>
         <div className="space-y-3 text-sm">
-          <Row k={tr("pages.payroll.fundGross")} v={next ? usd(required) : "—"} />
-          <Row k={tr("pages.payroll.fundBuffer")} v={next ? `+ ${usd(buffer)}` : "—"} tone="warn" />
-          <Row k={tr("pages.payroll.fundNeeded")} v={next ? usd(needed) : "—"} />
+          <Row k={tr("pages.payroll.fundGross")} v={next ? usd(required) : "-"} />
+          <Row k={tr("pages.payroll.fundBuffer")} v={next ? `+ ${usd(buffer)}` : "-"} tone="warn" />
+          <Row k={tr("pages.payroll.fundNeeded")} v={next ? usd(needed) : "-"} />
           <div className="my-2 border-t border-white/10" />
           <Row k={tr("pages.payroll.fundReady")} v={usdBase(treasuryQ.data.totals.liquidBaseUnits)} tone="info" />
           {next && (
@@ -269,7 +275,7 @@ export default function PayrollPage() {
 /**
  * Self-custody Payouts: builds unsigned XDR(s) server-side, the caller signs
  * with their own wallet, then submits. Contractor-only by design (LFT Art.
- * 101) — the two checkboxes are required per run, not a one-time setting.
+ * 101). The two checkboxes are required per run, not a one-time setting.
  */
 function PayoutsPanel({
   auth,
@@ -360,7 +366,7 @@ function PayoutsPanel({
       )}
       {tx && (
         <a href={txUrl(tx, network)} target="_blank" rel="noreferrer" className="mt-2 block font-mono text-xs text-brand hover:underline">
-          tx {shortHash(tx, 8, 6)} ↗
+          tx {shortHash(tx, 8, 6)}
         </a>
       )}
     </Card>

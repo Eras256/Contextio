@@ -31,7 +31,7 @@ export function legalRouter(): Router {
         hash: current.hash,
         document: current.document,
         reviewStatus: "interim",
-        reviewNote: "Pending review by a licensed attorney — not yet final or legally binding.",
+        reviewNote: "Pending review by a licensed attorney. Not yet final or legally binding.",
       });
     } catch (e) {
       next(e);

@@ -1,8 +1,8 @@
 "use client";
 
-import { AllocationBar, Badge, Card, DataBadge, Info, SectionHeader, Skeleton, Stat } from "@/components/ui";
+import { AllocationBar, Badge, Card, DataBadge, DemoDataNotice, Info, SectionHeader, Skeleton, Stat } from "@/components/ui";
 import { bps, shortHash, usdBase, localDateTime } from "@/lib/format";
-import { api, type Decision, type TreasurySnapshot } from "@/lib/api";
+import { api, publicApi, type Decision, type TreasurySnapshot } from "@/lib/api";
 import { TreasuryControls } from "@/components/TreasuryControls";
 import { useLiveData } from "@/lib/useLiveData";
 import { useT } from "@/lib/i18n";
@@ -27,21 +27,12 @@ export default function TreasuryPage() {
   const { accessToken, tenantId, address, connect, connecting } = useAuth();
   const { data: snap, live, loading } = useLiveData(api.treasury, EMPTY, {
     realtimeTable: "treasury_positions",
+    publicFetcher: publicApi.treasury,
   });
-  const activity = useLiveData<Decision[]>(api.decisions, [], { realtimeTable: "agent_decisions" });
-
-  if (!accessToken) {
-    return (
-      <div className="space-y-8">
-        <SectionHeader
-          eyebrow={tr("pages.treasury.eyebrow")}
-          title={tr("pages.treasury.title")}
-          description={tr("pages.treasury.desc")}
-        />
-        <ConnectGate connect={connect} connecting={connecting} tr={tr} />
-      </div>
-    );
-  }
+  const activity = useLiveData<Decision[]>(api.decisions, [], {
+    realtimeTable: "agent_decisions",
+    publicFetcher: publicApi.decisions,
+  });
 
   const t = snap.totals;
   const cfg = snap.config;
@@ -60,6 +51,16 @@ export default function TreasuryPage() {
         description={tr("pages.treasury.desc")}
         action={<DataBadge live={live} loading={loading} />}
       />
+
+      {!accessToken && (
+        <DemoDataNotice
+          message={tr("pages.treasury.demoBanner")}
+          connect={connect}
+          connecting={connecting}
+          connectLabel={tr("auth.connect")}
+          connectingLabel={tr("auth.connecting")}
+        />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="relative overflow-hidden border-brand/25 bg-gradient-to-br from-brand/[0.08] via-transparent to-transparent transition hover:border-brand/40">
@@ -130,7 +131,11 @@ export default function TreasuryPage() {
         </Card>
       </div>
 
-      {tenantId && <TreasuryControls auth={{ accessToken, tenantId }} address={address} config={snap.config} />}
+      {accessToken && tenantId ? (
+        <TreasuryControls auth={{ accessToken, tenantId }} address={address} config={snap.config} />
+      ) : (
+        <ConnectGate connect={connect} connecting={connecting} tr={tr} />
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card>

@@ -37,7 +37,7 @@ export function Stat({
 
 /**
  * Inline help: a small "i" that reveals a plain-language explanation on hover
- * or keyboard focus. Built for people who've never touched web3 — every piece
+ * or keyboard focus. Built for people who've never touched web3: every piece
  * of jargon on a screen should be one hover away from a human explanation.
  */
 export function Info({ text, label }: { text: string; label?: string }) {
@@ -128,11 +128,40 @@ export function AllocationBar({ yieldShareBps }: { yieldShareBps: number }) {
 }
 
 export function DataBadge({ live, loading }: { live: boolean; loading: boolean }) {
-  if (loading) return <Badge>Loading…</Badge>;
+  if (loading) return <Badge>Loading...</Badge>;
   return live ? (
     <Badge tone="success">● Live data</Badge>
   ) : (
-    <Badge tone="warn">Demo data · sign in</Badge>
+    <Badge tone="warn">Demo data, sign in</Badge>
+  );
+}
+
+/**
+ * Slim banner shown above a page's real, public demo-tenant data when nobody
+ * is signed in. Lets a visitor see the live page without a wallet, while
+ * making clear it's the shared demo tenant, not their own account, and that
+ * the interactive controls further down need a connected wallet.
+ */
+export function DemoDataNotice({
+  message,
+  connect,
+  connecting,
+  connectLabel,
+  connectingLabel,
+}: {
+  message: string;
+  connect: () => void | Promise<void>;
+  connecting: boolean;
+  connectLabel: string;
+  connectingLabel: string;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-accent/20 bg-accent/5 px-4 py-3 text-sm text-slate-300">
+      <span>{message}</span>
+      <button className="btn-primary shrink-0 px-4 py-1.5 text-xs" onClick={() => void connect()} disabled={connecting}>
+        {connecting ? connectingLabel : connectLabel}
+      </button>
+    </div>
   );
 }
 

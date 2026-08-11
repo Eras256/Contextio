@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Card, KeyValue, SectionHeader } from "@/components/ui";
+import { Badge, Card, DemoDataNotice, KeyValue, SectionHeader } from "@/components/ui";
 import { shortHash, localDateTime } from "@/lib/format";
-import { api, apiBaseUrl, type Decision, type LegalState } from "@/lib/api";
+import { api, apiBaseUrl, publicApi, type Decision, type LegalState } from "@/lib/api";
 import { getAiConfig } from "@/lib/aiModel";
 import { useLiveData } from "@/lib/useLiveData";
 import { useI18n } from "@/lib/i18n";
@@ -21,8 +21,11 @@ export default function AgentPage() {
   const { t, locale } = useI18n();
   const network = useNetwork();
   const { accessToken, tenantId, connect, connecting } = useAuth();
-  const decisions = useLiveData<Decision[]>(api.decisions, [], { realtimeTable: "agent_decisions" });
-  const legal = useLiveData<LegalState>(api.legal, { published: false });
+  const decisions = useLiveData<Decision[]>(api.decisions, [], {
+    realtimeTable: "agent_decisions",
+    publicFetcher: publicApi.decisions,
+  });
+  const legal = useLiveData<LegalState>(api.legal, { published: false }, { publicFetcher: publicApi.legal });
   const [running, setRunning] = useState(false);
   const [runMsg, setRunMsg] = useState<string | null>(null);
 
@@ -50,14 +53,14 @@ export default function AgentPage() {
         const reason = /not enough/.test(e)
           ? tf("pages.agent.runInsufficient", "there isn't enough in that bucket to settle right now")
           : /timed out|timeout/.test(e)
-            ? tf("pages.agent.runTimeout", "the network is slow — it may still settle and appear in the feed shortly")
+            ? tf("pages.agent.runTimeout", "the network is slow, it may still settle and appear in the feed shortly")
             : d.executionError;
         setRunMsg(`${tf("pages.agent.runProposed", "Agent proposed a move, but it couldn't settle this cycle:")} ${reason}`);
       } else {
         setRunMsg(
           d.action === "noop"
-            ? tf("pages.agent.runNoop", "Agent evaluated — treasury within band, no move needed.")
-            : tf("pages.agent.runOk", "Agent ran — decision settled on-chain."),
+            ? tf("pages.agent.runNoop", "Agent evaluated. Treasury within band, no move needed.")
+            : tf("pages.agent.runOk", "Agent ran. Decision settled on-chain."),
         );
       }
     } catch (e) {
@@ -66,28 +69,6 @@ export default function AgentPage() {
       setRunning(false);
     }
   };
-
-  if (!accessToken) {
-    return (
-      <div className="space-y-8">
-        <SectionHeader
-          eyebrow={t("pages.agent.eyebrow")}
-          title={t("pages.agent.title")}
-          description={t("pages.agent.desc")}
-        />
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-brand/10 via-ink-900/40 to-accent/10 px-6 py-16 text-center">
-          <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-brand/20 blur-3xl" />
-          <div className="relative mx-auto max-w-md">
-            <h3 className="text-xl font-semibold text-white">{t("pages.agent.connectTitle")}</h3>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-slate-300">{t("pages.agent.connectBody")}</p>
-            <button className="btn-primary mt-6 px-5 py-2.5" onClick={() => void connect()} disabled={connecting}>
-              {connecting ? t("auth.connecting") : t("auth.connect")}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const doc = (legal.data.document ?? {}) as LegalDoc;
   const consents = doc.consentRequirements ?? [];
@@ -103,8 +84,30 @@ export default function AgentPage() {
         description={t("pages.agent.desc")}
       />
 
+      <p className="text-xs text-slate-500">
+        {t("pages.agent.mainnetLabel")}{" "}
+        <a
+          href="https://contextio-api-mainnet.fly.dev/api/v1/public/activity"
+          target="_blank"
+          rel="noreferrer"
+          className="text-brand underline hover:no-underline"
+        >
+          {t("pages.agent.mainnetLink")}
+        </a>
+      </p>
+
+      {!accessToken && (
+        <DemoDataNotice
+          message={t("pages.agent.demoBanner")}
+          connect={connect}
+          connecting={connecting}
+          connectLabel={t("auth.connect")}
+          connectingLabel={t("auth.connecting")}
+        />
+      )}
+
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* The assistant's rulebook (legal context) */}
+        {/* The agent's rulebook (legal context) */}
         <Card>
           <div className="mb-1 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-white">{t("pages.agent.rulebookTitle")}</h3>
@@ -115,11 +118,11 @@ export default function AgentPage() {
           <p className="mb-4 text-xs text-slate-400">{t("pages.agent.rulebookBody")}</p>
           <KeyValue
             k={t("pages.agent.kDomain")}
-            v={<span className="font-mono text-xs">{doc.tenantDomain ?? "—"}</span>}
+            v={<span className="font-mono text-xs">{doc.tenantDomain ?? "-"}</span>}
           />
           <KeyValue
             k={t("pages.agent.kActiveIn")}
-            v={countries.length ? countries.map(countryLabel).join(" · ") : "—"}
+            v={countries.length ? countries.map(countryLabel).join(", ") : "-"}
           />
           <KeyValue
             k={t("pages.agent.kHash")}
@@ -131,10 +134,10 @@ export default function AgentPage() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {shortHash(legal.data.hash)} ↗
+                  {shortHash(legal.data.hash)}
                 </a>
               ) : (
-                <span className="font-mono text-xs text-slate-500">—</span>
+                <span className="font-mono text-xs text-slate-500">-</span>
               )
             }
           />
@@ -146,7 +149,7 @@ export default function AgentPage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                {t("pages.agent.viewWellKnown")} ↗
+                {t("pages.agent.viewWellKnown")}
               </a>
             </div>
           )}
@@ -175,8 +178,18 @@ export default function AgentPage() {
       <Card>
         <div className="mb-1 flex flex-wrap items-start justify-between gap-2">
           <h3 className="text-sm font-semibold text-white">{t("pages.agent.activityTitle")}</h3>
-          <button className="btn-ghost text-xs" onClick={() => void runAgent()} disabled={running}>
-            {running ? tf("pages.agent.running", "Running…") : tf("pages.agent.runNow", "Run agent")}
+          <button
+            className="btn-ghost text-xs disabled:opacity-40"
+            onClick={() => void (accessToken ? runAgent() : connect())}
+            disabled={accessToken ? running : connecting}
+          >
+            {accessToken
+              ? running
+                ? tf("pages.agent.running", "Running...")
+                : tf("pages.agent.runNow", "Run agent")
+              : connecting
+                ? t("auth.connecting")
+                : t("auth.connect")}
           </button>
         </div>
         <p className="mb-4 text-xs text-slate-400">{t("pages.agent.activityBody")}</p>
@@ -206,10 +219,10 @@ export default function AgentPage() {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      {shortHash(d.legalContextHash)} ↗
+                      {shortHash(d.legalContextHash)}
                     </a>
                   ) : (
-                    <span className="font-mono text-slate-500">—</span>
+                    <span className="font-mono text-slate-500">-</span>
                   )}
                 </span>
                 <span className="text-slate-400">
@@ -221,10 +234,10 @@ export default function AgentPage() {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      {shortHash(d.stellarTxHash, 10, 6)} ↗
+                      {shortHash(d.stellarTxHash, 10, 6)}
                     </a>
                   ) : (
-                    <span className="font-mono text-slate-500 break-all">{d.stellarTxHash ?? "—"}</span>
+                    <span className="font-mono text-slate-500 break-all">{d.stellarTxHash ?? "-"}</span>
                   )}
                 </span>
               </div>

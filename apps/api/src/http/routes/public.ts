@@ -43,6 +43,84 @@ export function publicRouter(): Router {
   });
 
   /**
+   * Public, read-only treasury snapshot for the demo tenant, same shape as the
+   * authenticated `GET /treasury` — lets /treasury on the web app render real
+   * data before a visitor connects a wallet. Never accepts a caller-supplied
+   * tenant id; only ever reads the one tenant configured for public display.
+   */
+  router.get("/treasury", async (req, res, next) => {
+    try {
+      const config = env();
+      const tenantId = config.PUBLIC_ACTIVITY_TENANT_ID || config.AUTH_DEMO_TENANT_ID;
+      if (!tenantId) {
+        res.json({ config: null, positions: [], totals: { liquidBaseUnits: "0", yieldBaseUnits: "0", totalBaseUnits: "0", yieldShareBps: 0 } });
+        return;
+      }
+      res.setHeader("cache-control", "public, max-age=5");
+      res.json(await req.container.treasury.snapshot(tenantId));
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  /**
+   * Public, read-only payroll snapshot for the demo tenant (employees are the
+   * seeded "Acme LATAM" fixtures, not real people — see supabase/seed.sql).
+   * Same shape as the three authenticated GETs it mirrors, bundled into one
+   * response so the web app can render /payroll without a wallet connected.
+   */
+  router.get("/payroll", async (req, res, next) => {
+    try {
+      const config = env();
+      const tenantId = config.PUBLIC_ACTIVITY_TENANT_ID || config.AUTH_DEMO_TENANT_ID;
+      if (!tenantId) {
+        res.json({ employees: [], obligations: [], runs: [] });
+        return;
+      }
+      const [employees, obligations, runs] = await Promise.all([
+        req.container.payroll.listEmployees(tenantId),
+        req.container.payroll.upcomingObligations(tenantId),
+        req.container.payroll.listRuns(tenantId),
+      ]);
+      res.setHeader("cache-control", "public, max-age=5");
+      res.json({ employees, obligations, runs });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  /**
+   * Public, read-only Legal Context Protocol state for the demo tenant, same
+   * shape as the authenticated `GET /legal`. Lets /agent show the real,
+   * published document and its hash before a visitor connects a wallet.
+   */
+  router.get("/legal", async (req, res, next) => {
+    try {
+      const config = env();
+      const tenantId = config.PUBLIC_ACTIVITY_TENANT_ID || config.AUTH_DEMO_TENANT_ID;
+      if (!tenantId) {
+        res.json({ published: false });
+        return;
+      }
+      const current = await req.container.legal.getForTenant(tenantId);
+      if (!current) {
+        res.json({ published: false });
+        return;
+      }
+      res.setHeader("cache-control", "public, max-age=30");
+      res.json({
+        published: true,
+        hash: current.hash,
+        document: current.document,
+        reviewStatus: "interim",
+        reviewNote: "Pending review by a licensed attorney. Not yet final or legally binding.",
+      });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  /**
    * Public, read-only snapshot of the live DeFindex vault the platform uses for
    * real yield (APY, TVL, our position). Powers the Integrations page. Returns
    * { live:false } when DeFindex runs in mock mode.
