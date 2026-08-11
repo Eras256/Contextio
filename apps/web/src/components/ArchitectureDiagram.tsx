@@ -1,16 +1,25 @@
 "use client";
 
+import { useNetwork } from "@/lib/network";
 import { useT } from "@/lib/i18n";
 
 /**
- * "How the money moves" architecture diagram — terminal/audit aesthetic that
+ * "How the money moves" architecture diagram, terminal/audit aesthetic that
  * matches the LiveAgentFeed (macOS window chrome, grid background, neon nodes,
- * monospace). Pure SVG, no deps. All labels are localized and public-safe:
- * your money → smart assistant + Contextio engine → Stellar contracts, DeFindex
- * (XLM yield), Blend (USDC lending) and local payouts, with LCP-signed rules.
+ * monospace). Pure SVG, no deps. All labels are localized and public-safe.
+ *
+ * The flow is deliberately drawn so that nothing reaches Stellar without a
+ * signing gate: the autonomous agent proposes, then signs through the
+ * policy-gated Smart Account; a human-initiated action proposes, then the
+ * caller's own wallet signs. Money never passes through Contextio. Reacts to
+ * the network pill (testnet/mainnet) so it stays honest about what actually
+ * runs where: the agent, the Smart Account, and Contextio's own Soroban
+ * contracts are testnet-only until external audit.
  */
 export function ArchitectureDiagram() {
   const t = useT();
+  const network = useNetwork();
+  const isMainnet = network === "mainnet";
 
   const Box = ({
     x,
@@ -20,6 +29,7 @@ export function ArchitectureDiagram() {
     title,
     subtitle,
     accent = "#2dd4bf",
+    dim = false,
   }: {
     x: number;
     y: number;
@@ -28,11 +38,22 @@ export function ArchitectureDiagram() {
     title: string;
     subtitle?: string;
     accent?: string;
+    dim?: boolean;
   }) => (
-    <g filter="url(#nodeShadow)">
-      <rect x={x} y={y} width={w} height={h} rx={12} fill="#0a1120" stroke={accent} strokeOpacity={0.6} />
+    <g filter="url(#nodeShadow)" opacity={dim ? 0.4 : 1}>
+      <rect
+        x={x}
+        y={y}
+        width={w}
+        height={h}
+        rx={12}
+        fill="#0a1120"
+        stroke={accent}
+        strokeOpacity={dim ? 0.35 : 0.6}
+        strokeDasharray={dim ? "4 3" : undefined}
+      />
       {/* accent top edge for a console-card feel */}
-      <rect x={x} y={y} width={w} height={3} rx={1.5} fill={accent} fillOpacity={0.55} />
+      <rect x={x} y={y} width={w} height={3} rx={1.5} fill={accent} fillOpacity={dim ? 0.25 : 0.55} />
       <text x={x + w / 2} y={y + (subtitle ? h / 2 + 1 : h / 2 + 5)} textAnchor="middle" fill="#f1f5f9" fontSize="13.5" fontWeight="700">
         {title}
       </text>
@@ -49,12 +70,20 @@ export function ArchitectureDiagram() {
           {subtitle}
         </text>
       ) : null}
+      {dim ? (
+        <g>
+          <rect x={x + w - 78} y={y - 9} width={78} height={16} rx={8} fill="#0a1120" stroke="#fb923c" strokeOpacity={0.6} />
+          <text x={x + w - 39} y={y + 2} textAnchor="middle" fill="#fb923c" fontSize="8.5" fontWeight="700" letterSpacing="0.4">
+            {t("diagram.testnetOnly").toUpperCase()}
+          </text>
+        </g>
+      ) : null}
     </g>
   );
 
-  const Lane = ({ y, label }: { y: number; label: string }) => (
+  const Lane = ({ y, h, label }: { y: number; h: number; label: string }) => (
     <>
-      <rect x={14} y={y} width={952} height={120} rx={14} fill="#ffffff" fillOpacity={0.012} stroke="#2dd4bf" strokeOpacity={0.06} />
+      <rect x={14} y={y} width={952} height={h} rx={14} fill="#ffffff" fillOpacity={0.012} stroke="#2dd4bf" strokeOpacity={0.06} />
       <text x={28} y={y + 22} fill="#5eead4" fillOpacity={0.65} fontSize="10.5" fontWeight="600" letterSpacing="1.5" fontFamily="ui-monospace, monospace">
         {label.toUpperCase()}
       </text>
@@ -85,10 +114,13 @@ export function ArchitectureDiagram() {
 
       {/* Diagram body on grid */}
       <div className="audit-grid audit-scroll relative z-20 overflow-x-auto px-3 py-4">
-        <svg viewBox="0 0 980 470" className="w-full min-w-[820px]" role="img" aria-label="Contextio architecture flow">
+        <svg viewBox="0 0 980 500" className="w-full min-w-[820px]" role="img" aria-label="Contextio architecture flow">
           <defs>
             <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
               <path d="M0,0 L7,3 L0,6 Z" fill="#2dd4bf" fillOpacity={0.7} />
+            </marker>
+            <marker id="arrowGold" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+              <path d="M0,0 L7,3 L0,6 Z" fill="#f5b54a" fillOpacity={0.9} />
             </marker>
             <filter id="nodeShadow" x="-20%" y="-20%" width="140%" height="160%">
               <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#000000" floodOpacity="0.55" />
@@ -96,44 +128,70 @@ export function ArchitectureDiagram() {
           </defs>
 
           {/* Lanes */}
-          <Lane y={30} label={t("diagram.laneCompany")} />
-          <Lane y={168} label={t("diagram.lanePlatform")} />
-          <Lane y={318} label={t("diagram.laneStellar")} />
+          <Lane y={20} h={100} label={t("diagram.laneCompany")} />
+          <Lane y={136} h={100} label={t("diagram.lanePlatform")} />
+          <Lane y={356} h={112} label={t("diagram.laneStellar")} />
 
           {/* Edges (drawn under nodes) */}
           <g stroke="#2dd4bf" strokeOpacity={0.32} strokeWidth="1.6" fill="none" markerEnd="url(#arrow)">
-            <path d="M520,112 C430,148 340,150 296,178" />
-            <path d="M570,112 L570,176" />
-            <path d="M670,210 L757,210" />
-            <path d="M280,242 L110,348" />
-            <path d="M490,242 L250,348" />
-            <path d="M500,242 L400,348" />
-            <path d="M550,242 L560,348" />
-            <path d="M710,348 L590,242" />
-            <path d="M640,242 L860,348" />
+            {/* Your money -> Assistant (informational: the planner reads your balance) */}
+            <path d="M460,98 C400,122 300,132 190,158" opacity={isMainnet ? 0.35 : 1} strokeDasharray={isMainnet ? "4 3" : undefined} />
+            {/* Your money -> Engine (informational, same reason) */}
+            <path d="M490,98 L490,158" />
+            {/* Engine -> Records */}
+            <path d="M590,188 L690,188" />
+            {/* Oracle -> Engine (price feed, no funds) */}
+            <path d="M722,376 C650,300 560,240 494,220" />
+            {/* Assistant -> Smart Account: the autonomous path's signing gate */}
+            <path
+              d="M190,218 L257,356"
+              opacity={isMainnet ? 0.35 : 1}
+              strokeDasharray={isMainnet ? "4 3" : undefined}
+            />
+          </g>
+
+          {/* Engine -> Your wallet: the human-initiated path's signing gate. Gold,
+              deliberately the most visually distinct edge in the diagram, because
+              this is the one that proves money never passes through Contextio. */}
+          <g stroke="#f5b54a" strokeOpacity={0.6} strokeWidth="2" fill="none" markerEnd="url(#arrowGold)">
+            <path d="M490,218 L490,262" />
+          </g>
+
+          {/* Your wallet -> Stellar lane: only after the signature exists */}
+          <g stroke="#f5b54a" strokeOpacity={0.4} strokeWidth="1.6" fill="none" markerEnd="url(#arrowGold)">
+            <path d="M460,312 C300,330 180,340 103,356" />
+            <path d="M480,312 L413,356" />
+            <path d="M500,312 L568,356" />
+            <path d="M520,312 C650,330 780,340 878,356" />
           </g>
 
           {/* Company */}
-          <Box x={470} y={52} w={200} h={60} title={t("diagram.treasuryTitle")} subtitle={t("diagram.treasurySub")} accent="#38bdf8" />
+          <Box x={390} y={42} w={200} h={56} title={t("diagram.treasuryTitle")} subtitle={t("diagram.treasurySub")} accent="#38bdf8" />
 
           {/* Platform */}
-          <Box x={180} y={178} w={200} h={64} title={t("diagram.agentTitle")} subtitle={t("diagram.agentSub")} accent="#a78bfa" />
-          <Box x={470} y={178} w={200} h={64} title={t("diagram.engineTitle")} subtitle={t("diagram.engineSub")} accent="#2dd4bf" />
-          <Box x={760} y={178} w={200} h={64} title={t("diagram.recordsTitle")} subtitle={t("diagram.recordsSub")} accent="#34d399" />
+          <Box x={90} y={158} w={200} h={60} title={t("diagram.agentTitle")} subtitle={t("diagram.agentSub")} accent="#a78bfa" dim={isMainnet} />
+          <Box x={390} y={158} w={200} h={60} title={t("diagram.engineTitle")} subtitle={t("diagram.engineSub")} accent="#2dd4bf" />
+          <Box x={690} y={158} w={200} h={60} title={t("diagram.recordsTitle")} subtitle={t("diagram.recordsSub")} accent="#34d399" />
 
-          {/* Stellar — six nodes, 145px wide with 10px gaps, fits the same lane width as before */}
-          <Box x={30} y={348} w={145} h={64} title={t("diagram.contractsTitle")} subtitle={t("diagram.contractsSub")} accent="#2dd4bf" />
-          <Box x={185} y={348} w={145} h={64} title={t("diagram.smartAccountTitle")} subtitle={t("diagram.smartAccountSub")} accent="#34d399" />
-          <Box x={340} y={348} w={145} h={64} title={t("diagram.savingsTitle")} subtitle={t("diagram.savingsSub")} accent="#f5b54a" />
-          <Box x={495} y={348} w={145} h={64} title={t("diagram.lendingTitle")} subtitle={t("diagram.lendingSub")} accent="#fb923c" />
-          <Box x={650} y={348} w={145} h={64} title={t("diagram.oracleTitle")} subtitle={t("diagram.oracleSub")} accent="#a78bfa" />
-          <Box x={805} y={348} w={145} h={64} title={t("diagram.payoutsTitle")} subtitle={t("diagram.payoutsSub")} accent="#38bdf8" />
+          {/* Signing gate: the caller's own wallet, never Contextio's key */}
+          <text x={490} y={250} textAnchor="middle" fill="#f5b54a" fillOpacity={0.75} fontSize="9.5" fontWeight="700" letterSpacing="1.5" fontFamily="ui-monospace, monospace">
+            {t("diagram.walletLabel")}
+          </text>
+          <Box x={390} y={262} w={200} h={50} title={t("diagram.walletTitle")} subtitle={t("diagram.walletSub")} accent="#f5b54a" />
 
           {/* LCP binding chip (cross-cutting) */}
-          <rect x={420} y={280} width={300} height={30} rx={15} fill="#a78bfa" fillOpacity={0.12} stroke="#a78bfa" strokeOpacity={0.5} />
-          <text x={570} y={299} textAnchor="middle" fill="#c4b5fd" fontSize="11" fontWeight="600" fontFamily="ui-monospace, monospace">
+          <rect x={340} y={320} width={300} height={26} rx={13} fill="#a78bfa" fillOpacity={0.12} stroke="#a78bfa" strokeOpacity={0.5} />
+          <text x={490} y={337} textAnchor="middle" fill="#c4b5fd" fontSize="11" fontWeight="600" fontFamily="ui-monospace, monospace">
             {t("diagram.binding")}
           </text>
+
+          {/* Stellar, six nodes, 145px wide with 10px gaps */}
+          <Box x={30} y={376} w={145} h={58} title={t("diagram.contractsTitle")} subtitle={t("diagram.contractsSub")} accent="#2dd4bf" dim={isMainnet} />
+          <Box x={185} y={376} w={145} h={58} title={t("diagram.smartAccountTitle")} subtitle={t("diagram.smartAccountSub")} accent="#34d399" dim={isMainnet} />
+          <Box x={340} y={376} w={145} h={58} title={t("diagram.savingsTitle")} subtitle={t("diagram.savingsSub")} accent="#f5b54a" />
+          <Box x={495} y={376} w={145} h={58} title={t("diagram.lendingTitle")} subtitle={t("diagram.lendingSub")} accent="#fb923c" />
+          <Box x={650} y={376} w={145} h={58} title={t("diagram.oracleTitle")} subtitle={t("diagram.oracleSub")} accent="#a78bfa" />
+          <Box x={805} y={376} w={145} h={58} title={t("diagram.payoutsTitle")} subtitle={t("diagram.payoutsSub")} accent="#38bdf8" />
         </svg>
       </div>
     </div>
