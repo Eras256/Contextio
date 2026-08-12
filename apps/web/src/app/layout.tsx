@@ -19,10 +19,27 @@ const body = Hanken_Grotesk({
   display: "swap",
 });
 
+const title = "Contextio: Agentic Treasury and Payroll for LATAM on Stellar";
+const description =
+  "Contextio binds every agentic treasury and payroll action to a signed Legal Context Protocol document. Non-custodial, built on Stellar for companies paying teams in Brazil, Argentina, and Colombia.";
+
 export const metadata: Metadata = {
-  title: "Contextio — Smart Treasury & Payroll for LATAM on Stellar",
-  description:
-    "A smart money assistant for Latin American businesses: keep payday covered, earn yield on idle cash, and pay your team in Brazil, Argentina, and Colombia — non-custodial, on Stellar.",
+  metadataBase: new URL("https://www.contextio.xyz"),
+  title,
+  description,
+  openGraph: {
+    title,
+    description,
+    url: "https://www.contextio.xyz",
+    siteName: "Contextio",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
