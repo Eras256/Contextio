@@ -43,8 +43,8 @@ export default async function OgImage() {
             </span>
           </div>
           <div style={{ display: "flex", marginTop: 34, maxWidth: 880 }}>
-            <span style={{ fontSize: 32, color: "#cbd5e1", lineHeight: 1.35 }}>
-              Agentic treasury and payroll for Latin America, built on Stellar
+            <span style={{ fontSize: 32, color: "#f1f5f9", fontWeight: 600, lineHeight: 1.35 }}>
+              Software moves your money. Prove it was allowed to.
             </span>
           </div>
         </div>
