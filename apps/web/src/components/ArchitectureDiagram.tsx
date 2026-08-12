@@ -1,7 +1,7 @@
 "use client";
 
 import { useNetwork } from "@/lib/network";
-import { useT } from "@/lib/i18n";
+import { useT, translate, type Locale } from "@/lib/i18n";
 
 /**
  * "How the money moves" architecture diagram, terminal/audit aesthetic that
@@ -15,9 +15,14 @@ import { useT } from "@/lib/i18n";
  * the network pill (testnet/mainnet) so it stays honest about what actually
  * runs where: the agent, the Smart Account, and Contextio's own Soroban
  * contracts are testnet-only until external audit.
+ *
+ * Pass `locale` to pin the diagram's own language regardless of the site's
+ * current locale, for a page like /pitch that stays English no matter what
+ * language the visitor last picked on the rest of the site.
  */
-export function ArchitectureDiagram() {
-  const t = useT();
+export function ArchitectureDiagram({ locale }: { locale?: Locale } = {}) {
+  const siteT = useT();
+  const t = locale ? (key: string) => translate(locale, key) : siteT;
   const network = useNetwork();
   const isMainnet = network === "mainnet";
 

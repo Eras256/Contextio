@@ -242,7 +242,7 @@ export default function PitchPage() {
           <FlowStep n="04" title="LCP binds it" body="Manifest hash goes on-chain" />
         </div>
         <div className="mt-6">
-          <ArchitectureDiagram />
+          <ArchitectureDiagram locale="en" />
         </div>
         <p className="mt-6 max-w-[62ch] text-base leading-relaxed text-slate-300">
           Funds stay in the company&apos;s own USDC wallet. Contextio holds no key that can move that money.

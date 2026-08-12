@@ -42,6 +42,7 @@ Testnet runs full autonomy. Everything below settles for real.
 | Self-hosted Anchor Platform (SEP-1/10/31/38) | app `contextio-anchor-platform`. Real protocol capability, deliberately never connected to a bank account (see [Mainnet](#mainnet) for why). |
 | Client SDK (npm) | `contextio-sdk`, `npm i contextio-sdk`. Version 0.3.0, published 2026-08-06 with the real Level-4 LCP schema. Types match what the API actually returns. |
 | Demo video | https://youtu.be/JI7KpNQMo0A |
+| Pitch deck | https://www.contextio.xyz/pitch |
 
 Connect Freighter (network toggle defaults to Testnet) at the web app, sign
 the message, then explore live treasury, agent, and payroll data.

@@ -1465,6 +1465,17 @@ const pt: Dict = {
 
 const DICTS: Record<Locale, Dict> = { en, es, pt };
 
+/**
+ * Look up a translation in a specific locale's dictionary, bypassing the
+ * user's chosen locale. For pages that must stay one language regardless of
+ * site-wide locale (the /pitch deck: English, always, for SCF/CV Labs/investor
+ * sharing) but still reuse a shared, translated component like the
+ * architecture diagram.
+ */
+export function translate(locale: Locale, key: string): string {
+  return resolve(DICTS[locale], key) ?? key;
+}
+
 function resolve(dict: Dict, path: string): string | undefined {
   const out = path.split(".").reduce<unknown>((acc, k) => {
     if (acc && typeof acc === "object" && k in (acc as Dict)) return (acc as Dict)[k];
