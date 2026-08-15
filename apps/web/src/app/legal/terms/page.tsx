@@ -36,6 +36,8 @@ const SECTIONS = {
       id: "restricted",
       title: "6. Restricted Jurisdictions",
       content: `Self-custody treasury and payout actions (the features that build a transaction for you to sign in your own wallet) are not offered to, and may not be used by, any person or entity located in, incorporated in, or a resident of: (a) any member state of the European Union or the European Economic Area, where Regulation (EU) 2023/1114 (MiCA) establishes a union-wide licensing regime for crypto-asset service providers; (b) the United States, where money-transmission is regulated federally by FinCEN under the Bank Secrecy Act and separately by up to fifty individual state licensing regimes; or (c) the People's Republic of China, which prohibits commercial crypto-asset services outright. This list reflects jurisdictions with a well-documented regime we have not yet had reviewed for this specific non-custodial pattern — it is not a claim that Contextio has been confirmed safe everywhere else, only that these three carry a specific, known, and material cost to get wrong.`,
+      note: "Mexico is deliberately absent from this list, not an overlooked one. It raises a different question this blocklist can't answer either way: whether Mexico's anti-money-laundering framework reaches a non-custodial software provider because of how and where the company itself operates, regardless of where a client is located. That question is open and tracked publicly in our engineering documentation, pending review by counsel.",
+      noteLink: { href: "https://github.com/Eras256/Contextio/blob/main/TECHNICAL.md", label: "See the open question in TECHNICAL.md ➔" },
     },
   ],
   es: [
@@ -69,6 +71,8 @@ const SECTIONS = {
       id: "restricted",
       title: "6. Jurisdicciones Restringidas",
       content: `Las acciones de auto-custodia de treasury y payouts (las funciones que construyen una transacción para que usted la firme en su propia wallet) no se ofrecen, y no pueden ser usadas por, ninguna persona o entidad ubicada, constituida, o residente en: (a) cualquier estado miembro de la Unión Europea o del Espacio Económico Europeo, donde el Reglamento (UE) 2023/1114 (MiCA) establece un régimen de licencias a nivel de toda la unión para proveedores de servicios de activos criptográficos; (b) Estados Unidos, donde la transmisión de dinero está regulada a nivel federal por FinCEN bajo la Bank Secrecy Act y por separado por hasta cincuenta regímenes estatales de licencias; o (c) la República Popular China, que prohíbe totalmente los servicios comerciales de criptoactivos. Esta lista refleja jurisdicciones con un régimen bien documentado que aún no hemos revisado para este patrón no-custodio específico — no es una afirmación de que Contextio esté confirmado como seguro en cualquier otro lugar, solo que estas tres tienen un costo específico, conocido y material de equivocarse.`,
+      note: "México está deliberadamente ausente de esta lista, no es un olvido. Plantea una pregunta distinta que esta lista de bloqueo no resolvería de todas formas: si el marco antilavado de México alcanza a un proveedor de software no-custodio por cómo y desde dónde opera la empresa misma, sin importar dónde esté el cliente. Esa pregunta está abierta y documentada públicamente en nuestra documentación técnica, pendiente de revisión legal.",
+      noteLink: { href: "https://github.com/Eras256/Contextio/blob/main/TECHNICAL.md", label: "Ver la pregunta abierta en TECHNICAL.md ➔" },
     },
   ],
   pt: [
@@ -102,6 +106,8 @@ const SECTIONS = {
       id: "restricted",
       title: "6. Jurisdições Restritas",
       content: `As ações de autocustódia de tesouraria e pagamentos (as funcionalidades que constroem uma transação para você assinar em sua própria carteira) não são oferecidas a, e não podem ser usadas por, nenhuma pessoa ou entidade localizada, constituída ou residente em: (a) qualquer estado-membro da União Europeia ou do Espaço Econômico Europeu, onde o Regulamento (UE) 2023/1114 (MiCA) estabelece um regime de licenciamento em toda a união para provedores de serviços de criptoativos; (b) Estados Unidos, onde a transmissão de dinheiro é regulada em nível federal pela FinCEN sob a Bank Secrecy Act e separadamente por até cinquenta regimes estaduais de licenciamento; ou (c) a República Popular da China, que proíbe totalmente os serviços comerciais de criptoativos. Esta lista reflete jurisdições com um regime bem documentado que ainda não revisamos para este padrão não-custodial específico — não é uma afirmação de que a Contextio foi confirmada como segura em qualquer outro lugar, apenas que estas três têm um custo específico, conhecido e material de errar.`,
+      note: "O México está deliberadamente ausente desta lista, não é um esquecimento. Isso levanta uma questão diferente que esta lista de bloqueio não resolveria de qualquer forma: se o marco antilavagem de dinheiro do México alcança um provedor de software não-custodiante pela forma e pelo local onde a própria empresa opera, independentemente de onde o cliente esteja. Essa questão está aberta e documentada publicamente em nossa documentação técnica, pendente de revisão jurídica.",
+      noteLink: { href: "https://github.com/Eras256/Contextio/blob/main/TECHNICAL.md", label: "Ver a questão aberta em TECHNICAL.md ➔" },
     },
   ],
 };
@@ -176,6 +182,21 @@ export default function TermsPage() {
                   <Link href="/legal-context" className="inline-block text-xs text-accent hover:underline">
                     {sec.link.label}
                   </Link>
+                )}
+                {"note" in sec && sec.note && (
+                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-xs leading-relaxed text-slate-400">
+                    <p>{sec.note}</p>
+                    {"noteLink" in sec && sec.noteLink && (
+                      <a
+                        href={sec.noteLink.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-block text-accent hover:underline"
+                      >
+                        {sec.noteLink.label}
+                      </a>
+                    )}
+                  </div>
                 )}
               </section>
             ))}

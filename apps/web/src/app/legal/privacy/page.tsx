@@ -24,7 +24,7 @@ We do NOT collect, store, or transmit private cryptographic keys, passphrases, o
 - Keep track of company balances, yield positions, and payroll history.
 - Run local time conversions and structured console traces for the live audit logs.
 - Sync UI panels in real time through Supabase Postgres database changes.
-All data is processed under appropriate data protection laws (such as LGPD in Brazil, Ley 25.326 in Argentina, and Ley 1581 in Colombia).`,
+All data is processed under appropriate data protection laws (such as LGPD in Brazil, Ley 25.326 in Argentina, Ley 1581 in Colombia, and the Federal Act on Data Protection (FADP) in Switzerland).`,
     },
     {
       id: "blockchain",
@@ -39,7 +39,7 @@ All data is processed under appropriate data protection laws (such as LGPD in Br
     {
       id: "rights",
       title: "5. Your Rights",
-      content: `Depending on your location, you may have rights under LGPD, Ley 25.326, or Ley 1581, including:
+      content: `Depending on your location, you may have rights under LGPD, Ley 25.326, Ley 1581, or the FADP, including:
 - Accessing the database entries stored for your company.
 - Rectifying inaccurate contact or email metadata.
 - Objecting to or requesting deletion of off-chain database logs (excluding public blockchain transactions).
@@ -65,7 +65,7 @@ NO recopilamos, almacenamos ni transmitimos claves criptográficas privadas, fra
 - Realizar un seguimiento de los balances de la empresa, posiciones de rendimiento e historial de dispersión.
 - Ejecutar conversiones horarias locales y trazas de consola estructuradas para los registros de auditoría.
 - Sincronizar paneles de la interfaz de usuario en tiempo real a través de Supabase Postgres.
-Todos los datos se procesan bajo las leyes de protección de datos correspondientes (como la LGPD en Brasil, la Ley 25.326 en Argentina y la Ley 1581 en Colombia).`,
+Todos los datos se procesan bajo las leyes de protección de datos correspondientes (como la LGPD en Brasil, la Ley 25.326 en Argentina, la Ley 1581 en Colombia, y la Ley Federal de Protección de Datos (FADP) en Suiza).`,
     },
     {
       id: "blockchain",
@@ -80,7 +80,7 @@ Todos los datos se procesan bajo las leyes de protección de datos correspondien
     {
       id: "rights",
       title: "5. Sus Derechos",
-      content: `Dependiendo de su ubicación, puede tener derechos bajo la LGPD, la Ley 25.326 o la Ley 1581, que incluyen:
+      content: `Dependiendo de su ubicación, puede tener derechos bajo la LGPD, la Ley 25.326, la Ley 1581 o la FADP, que incluyen:
 - Acceder a los registros de la base de datos almacenados para su empresa.
 - Rectificar metadatos de contacto o correos electrónicos inexactos.
 - Oponerse o solicitar la eliminación de registros en la base de datos off-chain (excluyendo transacciones públicas en blockchain).
@@ -106,7 +106,7 @@ Nós NÃO coletamos, armazenamos ou transmitimos chaves criptográficas privadas
 - Acompanhar os saldos da empresa, posições de rendimento e histórico de pagamento.
 - Executar conversões de horário local e logs estruturados de auditoria na tela.
 - Sincronizar painéis da interface em tempo real através do Supabase Postgres.
-Todos os dados são processados sob as leis de proteção de dados apropriadas (como a LGPD no Brasil, a Lei 25.326 na Argentina e a Lei 1581 na Colômbia).`,
+Todos os dados são processados sob as leis de proteção de dados apropriadas (como a LGPD no Brasil, a Lei 25.326 na Argentina, a Lei 1581 na Colômbia, e a Lei Federal de Proteção de Dados (FADP) na Suíça).`,
     },
     {
       id: "blockchain",
@@ -121,7 +121,7 @@ Todos os dados são processados sob as leis de proteção de dados apropriadas (
     {
       id: "rights",
       title: "5. Seus Direitos",
-      content: `Dependendo de sua localização, você pode ter direitos sob a LGPD, Lei 25.326 ou Lei 1581, incluindo:
+      content: `Dependendo de sua localização, você pode ter direitos sob a LGPD, Lei 25.326, Lei 1581 ou a FADP, incluindo:
 - Acessar as entradas do banco de dados armazenadas para sua empresa.
 - Retificar metadatos de contato ou e-mail imprecisos.
 - Opor-se ou solicitar a exclusão de registros do banco de dados off-chain (excluindo transações públicas em blockchain).
@@ -181,7 +181,7 @@ export default function PrivacyPage() {
               {t("legal.privacyPolicy")}
             </h1>
             <div className="flex items-center gap-2.5 text-xs text-slate-500">
-              <span>{t("legal.lastUpdated")}: June 30, 2026</span>
+              <span>{t("legal.lastUpdated")}: August 6, 2026</span>
               <span>•</span>
               <span className="font-mono uppercase text-brand">Corporate Compliance</span>
             </div>

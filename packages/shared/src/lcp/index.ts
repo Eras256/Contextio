@@ -111,7 +111,7 @@ export function buildLegalContext(input: BuildLegalContextInput): LegalContext {
     atrHash: `0x${input.termsSha256.toLowerCase()}`,
     acceptanceRequired: true,
     disputeResolution: {
-      method: "Contextio arbitration — see `disputeChannels` for the per-jurisdiction venue (BR/AR/CO)",
+      method: `Contextio arbitration — see \`disputeChannels\` for the per-jurisdiction venue (${input.jurisdictions.join("/")})`,
       jurisdiction: input.jurisdictions.join(", "),
       contact: input.providerContactEmail,
       source: `https://${input.tenantDomain}/legal/disputes/${input.jurisdictions[0]?.toLowerCase() ?? "br"}`,

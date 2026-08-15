@@ -61,7 +61,7 @@ export const lcpDisputeChannelSchema = z.object({
 /**
  * spec: `disputeResolution` (Level 4). The official schema's shape is a
  * single object, not per-jurisdiction — Contextio populates this with the
- * primary/default channel and keeps the full BR/AR/CO breakdown in
+ * primary/default channel and keeps the full per-jurisdiction breakdown in
  * `disputeChannels` (extension) below, since real per-jurisdiction detail
  * matters more to LatAm SMB counterparties than the spec's minimum shape.
  */
