@@ -44,7 +44,7 @@ export function verifyLegalContext(context: LegalContext, expectedHash: string):
 
 /**
  * Contextio's own document, at Contextio's own path — NOT the reserved
- * `/.well-known/legal-context.json` from the AAA/Integra Ledger/SDF "Legal
+ * `/.well-known/legal-context.json` from the AAA/Integra Ledger "Legal
  * Context Protocol" open standard (legalcontextprotocol.org, June 2026),
  * which uses an unrelated schema. Named "LCP" internally since before that
  * standard existed; kept off its reserved path to avoid the collision.
