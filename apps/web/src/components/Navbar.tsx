@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AuthControls } from "@/components/AuthControls";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { AiSelector } from "@/components/AiSelector";
 import { NetworkToggle } from "@/components/NetworkToggle";
+import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 
 const SECTIONS = [
@@ -29,7 +30,9 @@ const SECTIONS = [
  */
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const t = useT();
+  const { address, connecting, connect } = useAuth();
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
@@ -40,14 +43,39 @@ export function Navbar() {
     setMobileOpen(false);
   }, [pathname]);
 
-  const WorkspaceLink = ({ className }: { className: string }) => (
-    <Link href="/treasury" className={className}>
-      {t("nav.workspace")}
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M5 12h14M13 6l6 6-6 6" />
-      </svg>
-    </Link>
+  const workspaceArrow = (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
   );
+
+  /**
+   * Connected: same as a plain nav link to /treasury. Signed out: this is
+   * the one control that actually opens the wallet connect flow (same
+   * modal as "Conectar wallet") instead of just navigating to a page that
+   * looks the same as browsing there — otherwise it's indistinguishable
+   * from the "Tesorería" nav link, which confused testers.
+   */
+  const WorkspaceLink = ({ className }: { className: string }) =>
+    address ? (
+      <Link href="/treasury" className={className}>
+        {t("nav.workspace")}
+        {workspaceArrow}
+      </Link>
+    ) : (
+      <button
+        type="button"
+        className={className}
+        disabled={connecting}
+        onClick={async () => {
+          await connect();
+          router.push("/treasury");
+        }}
+      >
+        {connecting ? t("auth.connecting") : t("nav.workspace")}
+        {workspaceArrow}
+      </button>
+    );
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-ink-950/80 backdrop-blur max-w-full overflow-x-hidden">
