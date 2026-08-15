@@ -163,7 +163,7 @@ export default function TermsPage() {
               {t("legal.termsOfService")}
             </h1>
             <div className="flex items-center gap-2.5 text-xs text-slate-500">
-              <span>{t("legal.lastUpdated")}: August 6, 2026</span>
+              <span>{t("legal.lastUpdated")}: August 15, 2026</span>
               <span>•</span>
               <span className="font-mono uppercase text-brand">LCP-Bound Document</span>
             </div>

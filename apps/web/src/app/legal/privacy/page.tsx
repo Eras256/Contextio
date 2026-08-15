@@ -181,7 +181,7 @@ export default function PrivacyPage() {
               {t("legal.privacyPolicy")}
             </h1>
             <div className="flex items-center gap-2.5 text-xs text-slate-500">
-              <span>{t("legal.lastUpdated")}: August 6, 2026</span>
+              <span>{t("legal.lastUpdated")}: August 15, 2026</span>
               <span>•</span>
               <span className="font-mono uppercase text-brand">Corporate Compliance</span>
             </div>
