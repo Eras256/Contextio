@@ -108,7 +108,7 @@ export interface LcpDisputeResolution {
 /**
  * As of SDK 0.3.0 / LCP spec version 0.2.0, this is a genuine implementation
  * of the real "Legal Context Protocol" open standard (legalcontextprotocol.org,
- * June 2026, AAA + Integra Ledger + SDF) — fields without a `spec:` note below
+ * June 2026, AAA + Integra Ledger) — fields without a `spec:` note below
  * are Contextio-specific extensions the standard's schema explicitly allows
  * (`additionalProperties: true`).
  */

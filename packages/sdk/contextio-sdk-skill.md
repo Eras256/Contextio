@@ -77,7 +77,8 @@ session JWT. `signInWithStellar` does all three steps:
 
 ```ts
 import { ContextioClient, signInWithStellar } from "contextio-sdk";
-import { StellarWalletsKit, Networks, defaultModules } from "@creit.tech/stellar-wallets-kit";
+import { StellarWalletsKit, Networks } from "@creit.tech/stellar-wallets-kit";
+import { defaultModules } from "@creit.tech/stellar-wallets-kit/modules/utils";
 
 const client = new ContextioClient({ baseUrl: "https://contextio-api.fly.dev" });
 
@@ -214,7 +215,7 @@ constant (`/.well-known/contextio-legal-context.json`) point at Contextio's
 **own** document path: a different, Contextio-specific path and schema from
 the reserved `/.well-known/legal-context.json` used by the independent, open
 Legal Context Protocol standard (`legalcontextprotocol.org`, AAA + Integra
-Ledger + SDF). As of SDK `0.3.0` Contextio's `LegalContext` shape is
+Ledger). As of SDK `0.3.0` Contextio's `LegalContext` shape is
 field-conformant with that open standard (`terms`, `termsFormat`, `atrHash`,
 `acceptanceRequired`, `disputeResolution`, `contact`, `api`), plus
 Contextio-specific extensions the standard's schema allows
