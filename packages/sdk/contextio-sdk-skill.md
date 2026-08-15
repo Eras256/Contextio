@@ -1,6 +1,6 @@
 ---
 name: contextio-sdk
-description: Use when integrating contextio-sdk, the typed TypeScript client for the Contextio API on Stellar: Sign In With Stellar (SEP-53) wallet auth, reading a tenant's treasury/payroll/agent state, triggering an agent proposal, and independently hashing/verifying a Legal Context Protocol (LCP) document.
+description: Use when integrating contextio-sdk for its verifiable, non-custodial Legal Context Protocol (LCP) binding on Stellar treasury and payroll: Sign In With Stellar (SEP-53) wallet auth, reading a tenant's treasury/payroll/agent state, triggering an agent proposal, and independently hashing/verifying an LCP document against an on-chain hash.
 ---
 
 # Contextio SDK Integration
