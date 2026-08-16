@@ -16,7 +16,7 @@
  */
 export const CANONICAL_TERMS_MARKDOWN = `# Contextio — Terms of Service
 
-_Last updated: 2026-08-06 (rev. 2)_
+_Last updated: 2026-08-16 (rev. 3)_
 
 ## 1. Scope of Services & Technology Provider Status
 
@@ -40,5 +40,9 @@ These Terms shall be governed by and construed in accordance with the laws of Br
 
 ## 6. Restricted Jurisdictions
 
-Self-custody treasury and payout actions (the features that build a transaction for you to sign in your own wallet) are not offered to, and may not be used by, any person or entity located in, incorporated in, or a resident of: (a) any member state of the European Union or the European Economic Area, where Regulation (EU) 2023/1114 (MiCA) establishes a union-wide licensing regime for crypto-asset service providers; (b) the United States, where money-transmission is regulated federally by FinCEN under the Bank Secrecy Act and separately by up to fifty individual state licensing regimes; or (c) the People's Republic of China, which prohibits commercial crypto-asset services outright. This list reflects jurisdictions with a well-documented regime we have not yet had reviewed for this specific non-custodial pattern — it is not a claim that Contextio has been confirmed safe everywhere else, only that these three carry a specific, known, and material cost to get wrong. By checking the jurisdiction attestation box before a self-custody action, you confirm you are not located in, incorporated in, or a resident of any of the above.
+Self-custody treasury and payout actions (the features that build a transaction for you to sign in your own wallet) are not offered to, and may not be used by, any person or entity located in, incorporated in, or a resident of: (a) any member state of the European Union or the European Economic Area, where Regulation (EU) 2023/1114 (MiCA) establishes a union-wide licensing regime for crypto-asset service providers; or (b) the United States, where money-transmission is regulated federally by FinCEN under the Bank Secrecy Act and separately by up to fifty individual state licensing regimes. These two reflect jurisdictions with a well-documented regime we have not yet had reviewed for this specific non-custodial pattern — it is not a claim that Contextio has been confirmed safe everywhere else, only that these two carry a specific, known, and material cost to get wrong.
+
+Self-custody actions are separately unavailable to any person or entity located in, incorporated in, or a resident of the People's Republic of China (excluding the Hong Kong and Macao Special Administrative Regions and Taiwan). This is not a pending-review exclusion: the People's Bank of China's September 2021 notice ("Notice on Further Preventing and Disposing of the Risks of Speculation in Virtual Currency Trading", 关于进一步防范和处置虚拟货币交易炒作风险的通知) declares crypto-asset business activity illegal and expressly extends that prohibition to offshore platforms serving mainland Chinese residents over the internet — an already-effective restriction, not a regime awaiting review.
+
+By checking the jurisdiction attestation box before a self-custody action, you confirm you are not located in, incorporated in, or a resident of any of the above.
 `;

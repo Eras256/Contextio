@@ -24,9 +24,17 @@ import { NETWORK_COOKIE } from "@/lib/network-shared";
  *   this project, but the sheer fragmentation (federal + 50 states) makes
  *   "confirmed safe" a much bigger research project than any single
  *   country reviewed so far.
- * - **China** — not a licensing regime to clear, an express, blanket
- *   prohibition (PBOC et al., Sept 2021) on essentially all commercial
- *   crypto-asset activity. The cheapest, clearest exclusion of the three.
+ * - **China** — not the same kind of exclusion as the two above: not a
+ *   regime pending review, but an already-effective, blanket prohibition.
+ *   The People's Bank of China's September 2021 notice ("Notice on Further
+ *   Preventing and Disposing of the Risks of Speculation in Virtual
+ *   Currency Trading", 关于进一步防范和处置虚拟货币交易炒作风险的通知)
+ *   declares crypto-asset business activity illegal and expressly extends
+ *   that prohibition to offshore platforms serving mainland Chinese
+ *   residents over the internet — explicit extraterritorial reach, not an
+ *   open research question like MiCA or FinCEN above. Hong Kong SAR, Macao
+ *   SAR, and Taiwan are outside this specific restriction (not currently
+ *   in `BLOCKED_COUNTRIES` below).
  *
  * BR/AR/CO/MX and everywhere else are no longer individually vetted before
  * being let through — the honest default is "open unless we know of a
