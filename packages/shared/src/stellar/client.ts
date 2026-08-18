@@ -548,7 +548,7 @@ export class StellarClient {
   }
 }
 
-export { xdr, nativeToScVal, scValToNative, Address, Keypair };
+export { xdr, nativeToScVal, scValToNative, Address, Keypair, Horizon, Asset, Operation, TransactionBuilder, BASE_FEE };
 
 /**
  * Build the `AuthPayload { signers: Map<Signer, Bytes>, context_rule_ids:
