@@ -261,6 +261,8 @@ const en: Dict = {
       demoBanner: "You're viewing Contextio's own live testnet activity. Connect your wallet to see and manage your own treasury.",
       connectTitle: "Manage your own treasury",
       connectBody: "Connect your Stellar wallet to rebalance, lend, and set your own risk rules. What you see above is Contextio's own live testnet activity, not yours yet.",
+      mainnetAutonomyNotice:
+        "On mainnet, autonomous rebalancing is invite-only while legal review closes. Self-custody actions are fully live there — you sign every transaction yourself, Contextio never holds a key that can move your funds.",
       loading: "Loading your money...",
       statTotal: "Total money",
       statTotalSub: "all your balances",
@@ -743,6 +745,8 @@ const es: Dict = {
       demoBanner: "Estás viendo la actividad real en testnet de la propia Contextio. Conecta tu wallet para ver y administrar tu propia tesorería.",
       connectTitle: "Administra tu propia tesorería",
       connectBody: "Conecta tu wallet de Stellar para rebalancear, prestar y definir tus propias reglas de riesgo. Lo que ves arriba es la actividad real en testnet de la propia Contextio, todavía no la tuya.",
+      mainnetAutonomyNotice:
+        "En mainnet, el rebalanceo autónomo es solo por invitación mientras cierra la revisión legal. Las acciones de autocustodia sí están completamente activas ahí: firmas cada transacción tú mismo, Contextio nunca tiene una llave capaz de mover tus fondos.",
       loading: "Cargando tu dinero...",
       statTotal: "Dinero total",
       statTotalSub: "todos tus saldos",
@@ -1225,6 +1229,8 @@ const pt: Dict = {
       demoBanner: "Você está vendo a atividade real em testnet da própria Contextio. Conecte sua carteira para ver e administrar sua própria tesouraria.",
       connectTitle: "Administre sua própria tesouraria",
       connectBody: "Conecte sua carteira Stellar para rebalancear, emprestar e definir suas próprias regras de risco. O que você vê acima é a atividade real em testnet da própria Contextio, ainda não a sua.",
+      mainnetAutonomyNotice:
+        "Na mainnet, o rebalanceamento autônomo é somente por convite enquanto a revisão jurídica é concluída. As ações de autocustódia já estão totalmente ativas lá: você assina cada transação, a Contextio nunca detém uma chave capaz de movimentar seus fundos.",
       loading: "Carregando seu dinheiro...",
       statTotal: "Dinheiro total",
       statTotalSub: "todos os seus saldos",

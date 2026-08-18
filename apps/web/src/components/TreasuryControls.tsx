@@ -24,6 +24,7 @@ export function TreasuryControls({
   address: string | null;
   config: TreasurySnapshot["config"];
 }) {
+  const network = useNetwork();
   const [agentEnabled, setAgentEnabled] = useState(config?.agentEnabled ?? true);
   const [toggling, setToggling] = useState(false);
   const [toggleMsg, setToggleMsg] = useState<string | null>(null);
@@ -97,6 +98,11 @@ export function TreasuryControls({
               ? "Active. Rebalances and lends 24/7 on its own. Blend lending runs through a policy-gated Smart Account with spending-limit caps, verified with real confirmed transactions."
               : "Paused. Only manual actions run."}
           </p>
+          {network === "mainnet" && (
+            <p className="mt-1.5 text-[11px] text-amber-300/90">
+              Autonomous execution is invite-only on mainnet while legal review closes — this toggle doesn&apos;t move real funds there yet. The manual, self-custody actions below are fully live: you sign every transaction yourself.
+            </p>
+          )}
           {toggleMsg && <p className="mt-1 text-[11px] text-slate-400">{toggleMsg}</p>}
         </div>
         <button

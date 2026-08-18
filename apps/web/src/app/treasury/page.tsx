@@ -134,7 +134,7 @@ export default function TreasuryPage() {
       {accessToken && tenantId ? (
         <TreasuryControls auth={{ accessToken, tenantId }} address={address} config={snap.config} />
       ) : (
-        <ConnectGate connect={connect} connecting={connecting} tr={tr} />
+        <ConnectGate connect={connect} connecting={connecting} tr={tr} network={network} />
       )}
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -218,10 +218,12 @@ function ConnectGate({
   connect,
   connecting,
   tr,
+  network,
 }: {
   connect: () => void | Promise<void>;
   connecting: boolean;
   tr: (k: string) => string;
+  network: string;
 }) {
   return (
     <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-brand/10 via-ink-900/40 to-accent/10 px-6 py-16 text-center">
@@ -234,6 +236,11 @@ function ConnectGate({
         </span>
         <h3 className="mt-5 text-xl font-semibold text-white">{tr("pages.treasury.connectTitle")}</h3>
         <p className="mx-auto mt-2 max-w-sm text-sm text-slate-300">{tr("pages.treasury.connectBody")}</p>
+        {network === "mainnet" && (
+          <p className="mx-auto mt-3 max-w-sm rounded-xl border border-amber-400/30 bg-amber-400/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-200">
+            {tr("pages.treasury.mainnetAutonomyNotice")}
+          </p>
+        )}
         <button className="btn-primary mt-6 px-5 py-2.5" onClick={() => void connect()} disabled={connecting}>
           {connecting ? tr("auth.connecting") : tr("auth.connect")}
         </button>
