@@ -148,6 +148,42 @@ export default function HomePage() {
         ))}
       </Reveal>
 
+      {/* ── Demo evidence — real, citable proof, not a claim ───────────────── */}
+      <Reveal>
+        <SectionEyebrow eyebrow={t("demo.eyebrow")} title={t("demo.title")} />
+        <p className="mt-2 max-w-2xl text-sm text-slate-400">{t("demo.subtitle")}</p>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          <DemoLinkCard
+            href="/payroll"
+            external={false}
+            icon={<CoinsIcon />}
+            title={t("demo.payrollTitle")}
+            body={t("demo.payrollBody")}
+          />
+          <DemoLinkCard
+            href="https://stellar.expert/explorer/testnet/tx/a7db3e71681ea5528a618706361944808b94f0d03522bacc9371fca16052e98a"
+            external
+            icon={<BoltIcon />}
+            title={t("demo.txTitle")}
+            body={t("demo.txBody")}
+          />
+          <DemoLinkCard
+            href="/.well-known/contextio-legal-context.json"
+            external
+            icon={<ShieldCheckIcon />}
+            title={t("demo.lcpJsonTitle")}
+            body={t("demo.lcpJsonBody")}
+          />
+          <DemoLinkCard
+            href="/legal-context"
+            external={false}
+            icon={<KeyIcon />}
+            title={t("demo.lcpViewerTitle")}
+            body={t("demo.lcpViewerBody")}
+          />
+        </div>
+      </Reveal>
+
       {/* ── CTA ──────────────────────────────────────────────────────────── */}
       <Reveal className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-brand/10 via-ink-900/40 to-accent/10 px-6 py-12 text-center sm:px-12 sm:py-16">
         <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-brand/20 blur-3xl" />
@@ -205,6 +241,41 @@ function StepCard({
       <h3 className="mt-4 text-base font-semibold text-white">{title}</h3>
       <p className="mt-2 text-sm leading-relaxed text-slate-300">{body}</p>
     </div>
+  );
+}
+
+function DemoLinkCard({
+  href,
+  external,
+  icon,
+  title,
+  body,
+}: {
+  href: string;
+  external: boolean;
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+}) {
+  const content = (
+    <>
+      <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl border border-white/10 bg-white/5 text-brand">
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="flex items-center gap-1.5 text-[15px] font-semibold text-white">
+          {title}
+          <span className="text-brand" aria-hidden>↗</span>
+        </span>
+        <span className="mt-1 block text-sm leading-relaxed text-slate-300">{body}</span>
+      </span>
+    </>
+  );
+  const className = "card flex items-start gap-3.5 transition hover:border-brand/30 hover:bg-ink-850";
+  return (
+    <a href={href} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined} className={className}>
+      {content}
+    </a>
   );
 }
 
