@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { type Logger, fromBaseUnits } from "@contextio/shared";
 import type { stellar } from "@contextio/shared";
+import { assertMainnetNeverAutoExecutesTreasuryActions, type StellarNetwork } from "@contextio/config";
 import type { ReflectorClient } from "../integrations/reflector.js";
 import type { TreasuryConfig, TreasuryPosition } from "@contextio/shared";
 import type { Repository } from "../db/repository.js";
@@ -62,6 +63,7 @@ export class TreasuryService {
     private readonly stellarClient: stellar.StellarClient,
     /** Treasury wallet whose real on-chain balances power the dashboard. */
     private readonly treasuryAddress: string | undefined,
+    private readonly network: StellarNetwork,
     /** Optional Reflector on-chain price oracle for real XLM/USD valuation. */
     private readonly reflector?: ReflectorClient,
   ) {}
@@ -226,6 +228,8 @@ export class TreasuryService {
    * (DeFindex/Blend), records the on-chain treasury event, and updates positions.
    */
   async rebalance(req: RebalanceRequest): Promise<{ txHash: string; legalContextHash: string }> {
+    assertMainnetNeverAutoExecutesTreasuryActions(this.network, req.actorType);
+
     const binding = await this.legal.bindForAction(req.tenantId, [
       "treasury-management",
     ]);

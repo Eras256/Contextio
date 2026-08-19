@@ -164,10 +164,23 @@ export function createContainer(): Container {
     logger,
     stellarClient,
     treasuryAddress || undefined,
+    config.STELLAR_NETWORK,
     reflector,
   );
-  const payroll = new PayrollService(repo, soroban, legal, audit, logger);
-  const agent = new AgentService(repo, treasury, defindex, blend, payroll, oracle, legal, audit, ai, logger);
+  const payroll = new PayrollService(repo, soroban, legal, audit, logger, config.STELLAR_NETWORK);
+  const agent = new AgentService(
+    repo,
+    treasury,
+    defindex,
+    blend,
+    payroll,
+    oracle,
+    legal,
+    audit,
+    ai,
+    logger,
+    config.STELLAR_NETWORK,
+  );
   const walletAuth = new WalletAuthService(repo, config, logger);
 
   return {

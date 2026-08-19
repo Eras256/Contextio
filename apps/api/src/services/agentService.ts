@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { type Logger, fromBaseUnits, applyBps } from "@contextio/shared";
 import type { AgentDecision, Country } from "@contextio/shared";
+import { assertMainnetNeverAutoExecutesTreasuryActions, type StellarNetwork } from "@contextio/config";
 import type { Repository } from "../db/repository.js";
 import type { TreasuryService, TreasurySnapshot } from "./treasuryService.js";
 import type { PayrollService, UpcomingObligation } from "./payrollService.js";
@@ -57,6 +58,7 @@ export class AgentService {
     private readonly audit: AuditService,
     private readonly ai: AiAdvisor,
     private readonly logger: Logger,
+    private readonly network: StellarNetwork,
   ) {}
 
   /**
@@ -68,6 +70,8 @@ export class AgentService {
    * action; the worker calls it on a slow cadence.
    */
   async runYieldCycle(tenantId: string): Promise<AgentDecision | null> {
+    assertMainnetNeverAutoExecutesTreasuryActions(this.network, "agent");
+
     const vaultId = this.defindex.vaultId;
     if (!this.defindex.live || !vaultId) return null;
 
@@ -135,6 +139,8 @@ export class AgentService {
    * so it shows in the feed. No-op when Blend isn't live.
    */
   async runBlendCycle(tenantId: string): Promise<AgentDecision | null> {
+    assertMainnetNeverAutoExecutesTreasuryActions(this.network, "agent");
+
     if (!this.blend.live) return null;
 
     const STEP = 10_000_000n; // 1 XLM

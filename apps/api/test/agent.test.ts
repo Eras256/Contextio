@@ -68,6 +68,7 @@ function buildAgent(opts: {
     {} as never,
     {} as never, // ai advisor — not live in plan tests (deterministic fallback)
     logger,
+    "testnet",
   );
 }
 

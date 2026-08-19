@@ -243,6 +243,58 @@ function assertMainnetHasNoHotKey(config: {
   }
 }
 
+/**
+ * Narrower, call-site companion to {@link assertMainnetHasNoHotKey} above.
+ * That check stops any hot key from existing on a mainnet-configured process
+ * at all, which today makes agent-signed mainnet execution structurally
+ * impossible — but only as a side effect of the key being absent. This check
+ * asserts the actual invariant directly, at the exact call shape that matters,
+ * so it keeps failing even if a future signer — a relayer, a smart-account
+ * delegate, anything that isn't literally `STELLAR_SERVICE_SECRET`/
+ * `BLEND_SIGNER_SECRET` — stops counting as a "hot key" under the check above.
+ *
+ * Refuses on mainnet unconditionally, not only for `actorType: "agent"`. The
+ * functions this guards (`TreasuryService.rebalance`, `PayrollService.
+ * executeRun`) are exclusively the *custodial* execution path — the
+ * self-custody prepare/submit path (the only path mainnet should ever use)
+ * calls different methods entirely and never reaches this check. So a
+ * `"user"` actor landing here isn't a legitimate mainnet caller either: it's
+ * someone hitting the custodial route directly (bypassing the UI, which
+ * only exposes prepare/submit on mainnet). Before this covered "user" too,
+ * that request didn't fail — `SorobanGateway` has no hot key or contract id
+ * to act with on mainnet, so it silently returned a fabricated `sim:` tx
+ * hash as if something had actually settled. That's a correctness and trust
+ * problem independent of the legal question below: an endpoint reporting
+ * success with a fake hash when nothing happened has to be rejected outright,
+ * not just quietly no-op. Refusing unconditionally fixes both at once.
+ *
+ * The legal half: this is the concrete difference between Contextio's
+ * mainnet posture and Nirium's under art. 24 Bis 4 — mainnet money only ever
+ * moves on the client's own signed XDR, never Contextio's. Removing this
+ * check (or narrowing it back to `actorType: "agent"` only) is a deliberate,
+ * visible change to that posture, not something a future feature should be
+ * able to cause by accident. See contextio-mainnet-launch-plan for the full
+ * legal context.
+ */
+export function assertMainnetNeverAutoExecutesTreasuryActions(
+  network: StellarNetwork,
+  actorType: "user" | "agent",
+): void {
+  if (network !== "mainnet") return;
+  if (actorType === "agent") {
+    throw new Error(
+      "Refusing to execute: an agent-initiated action cannot settle on STELLAR_NETWORK=mainnet. " +
+        "Mainnet money only moves when the client signs their own prepared transaction — route " +
+        "this through the prepare/submit self-custody path instead of agent-triggered execution.",
+    );
+  }
+  throw new Error(
+    "Refusing to execute: the direct custodial settlement path cannot run on STELLAR_NETWORK=mainnet, " +
+      "even for a user-initiated request. Mainnet has no signer or contract id to settle with here by " +
+      "design — use the prepare/submit self-custody endpoints instead of this one.",
+  );
+}
+
 export function loadServerEnv(source: NodeJS.ProcessEnv = process.env): ServerEnv {
   const config = parseOrThrow(serverEnvSchema, source);
   assertMainnetHasNoHotKey(config);

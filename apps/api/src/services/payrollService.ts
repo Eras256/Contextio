@@ -7,6 +7,7 @@ import type {
   PayrollSchedule,
   ScheduleCadence,
 } from "@contextio/shared";
+import { assertMainnetNeverAutoExecutesTreasuryActions, type StellarNetwork } from "@contextio/config";
 import type { Repository } from "../db/repository.js";
 import type { SorobanGateway } from "../integrations/soroban.js";
 import type { LegalContextService } from "./legalContextService.js";
@@ -65,6 +66,7 @@ export class PayrollService {
     private readonly legal: LegalContextService,
     private readonly audit: AuditService,
     private readonly logger: Logger,
+    private readonly network: StellarNetwork,
   ) {}
 
   listEmployees(tenantId: string): Promise<PayrollEmployee[]> {
@@ -181,6 +183,8 @@ export class PayrollService {
     actorType: "user" | "agent";
     dryRun?: boolean;
   }): Promise<PayrollRun> {
+    assertMainnetNeverAutoExecutesTreasuryActions(this.network, input.actorType);
+
     const schedule = await this.repo.getSchedule(input.tenantId, input.scheduleId);
     if (!schedule) throw new Error("Schedule not found");
 

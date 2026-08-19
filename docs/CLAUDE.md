@@ -92,6 +92,28 @@ against a real contract), not just inferred from reading the code.
    platform can hold a key capable of moving a client's funds. Don't add one,
    and don't relax the guard to special-case around it without treating that
    as a security-relevant decision, not a config tweak.
+
+   A second, narrower check enforces the same invariant from the call-site
+   side: `assertMainnetNeverAutoExecutesTreasuryActions` (same file) refuses
+   any request — `actorType: "agent"` or `"user"` — against
+   `TreasuryService.rebalance`, `PayrollService.executeRun`, or the agent's
+   direct DeFindex/Blend cycles when `STELLAR_NETWORK=mainnet`, independent
+   of whether a signer secret happens to be present. It refuses `"user"` too
+   because those two methods are exclusively the *custodial* execution path
+   — self-custody prepare/submit calls different methods entirely and never
+   reaches this check — so a user-actor landing here on mainnet isn't a
+   legitimate caller either, and before this covered "user" it silently
+   returned a fabricated `sim:` success instead of rejecting outright. This
+   is deliberate belt-and-suspenders: the boot
+   guard makes agent-signed mainnet execution impossible today because the
+   key can't exist; this check makes it impossible even if some future signer
+   (a relayer, a smart-account delegate) stopped counting as a "hot key"
+   under that check. The underlying rule for any new design — a mini-app, an
+   agent-to-agent payment feature, anything that moves money — is the same:
+   money may flow from Contextio's own funds to an individual, but a client's
+   own funds only ever move on the client's own signature. State that
+   explicitly in the design, don't assume it falls out of the existing
+   guards by default.
 4. **State-changing treasury/payroll endpoints require a valid Legal Context
    Protocol binding.** Return **HTTP 412** if a legal context isn't published
    or a required consent is missing — this is the enforcement mechanism for
