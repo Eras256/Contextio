@@ -79,6 +79,14 @@ primary_region = "gru"
   # clicks the mainnet link is told to check gets a cold Fly auto-suspend
   # start otherwise — ~10s of nothing happening before the first response,
   # easily read as broken rather than slow. Small ongoing cost, zero surprise.
+  #
+  # This alone isn't sufficient if `fly scale count` is ever > 1: Fly keeps
+  # *a* machine running, not *every* machine, so a second instance can sit
+  # stopped and still eat the full cold start if traffic (or a future scale-
+  # up) reaches it — confirmed live 2026-08-19 (a real ~10s hit on
+  # /api/v1/public/oracle after this setting was already deployed, traced to
+  # exactly this). Keep `fly scale count 1 -a contextio-api-mainnet` paired
+  # with this setting until there's an actual reason to run more than one.
   auto_stop_machines = "stop"
   auto_start_machines = true
   min_machines_running = 1
