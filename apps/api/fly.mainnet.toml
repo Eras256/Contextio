@@ -75,9 +75,13 @@ primary_region = "gru"
 [http_service]
   internal_port = 8080
   force_https = true
+  # min_machines_running = 1, not 0: an SCF reviewer (or anyone else) who
+  # clicks the mainnet link is told to check gets a cold Fly auto-suspend
+  # start otherwise — ~10s of nothing happening before the first response,
+  # easily read as broken rather than slow. Small ongoing cost, zero surprise.
   auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
 
   [http_service.concurrency]
     type = "requests"
