@@ -81,6 +81,9 @@ importers:
       '@blend-capital/blend-sdk':
         specifier: ^3.3.0
         version: 3.3.0
+      '@contextio/agent-planner':
+        specifier: git+https://github.com/contextio/contextio-agent-planner.git#main
+        version: git+https://github.com/contextio/contextio-agent-planner.git#d9d7d60ce62a7cfb968d893da88b59c2e49553a0
       '@contextio/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -335,6 +338,10 @@ packages:
 
   '@coinbase/cdp-sdk@1.51.2':
     resolution: {integrity: sha512-o4IEwXbyAjfhPQWoFBuqnV1JQGLk4NlUVMzH/ur4voPSjYZvlYFVuOoE/eEcsoPFN28xaWTBvqebwncQL8h8fQ==}
+
+  '@contextio/agent-planner@git+https://github.com/contextio/contextio-agent-planner.git#d9d7d60ce62a7cfb968d893da88b59c2e49553a0':
+    resolution: {commit: d9d7d60ce62a7cfb968d893da88b59c2e49553a0, repo: https://github.com/contextio/contextio-agent-planner.git, type: git}
+    version: 0.1.0
 
   '@creit.tech/stellar-wallets-kit@2.4.0':
     resolution: {integrity: sha512-VVXYS1niSmwyPFV48ra6GbsYivBENYQEjscA36Yd60heGdlfwBMm9RHO/Njn+3UPTaXcoHozrunTb/ItjXiNJw==}
@@ -5578,6 +5585,8 @@ snapshots:
       - typescript
       - utf-8-validate
     optional: true
+
+  '@contextio/agent-planner@git+https://github.com/contextio/contextio-agent-planner.git#d9d7d60ce62a7cfb968d893da88b59c2e49553a0': {}
 
   '@creit.tech/stellar-wallets-kit@2.4.0(@trezor/connect@9.7.3(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(tslib@2.8.1)(typescript@5.9.3)(utf-8-validate@6.0.6)(ws@8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@types/react@18.3.31)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(near-api-js@5.1.1)(react@18.3.1)(tslib@2.8.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@18.3.1))(utf-8-validate@6.0.6)(zod@3.25.76)':
     dependencies:
