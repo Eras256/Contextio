@@ -188,6 +188,10 @@ Isomorphic (browser + Node >= 18), ESM, zero server deps. Source:
 
 ---
 
+## Contributing
+
+New contributors should start with [`CONTRIBUTING.md`](CONTRIBUTING.md), which covers prerequisites, local setup, mock-mode development, validation commands, contribution conventions, and security boundaries.
+
 ## Quickstart
 
 Prerequisites: Node >= 20, pnpm >= 10, Rust (stable + `wasm32-unknown-unknown`),
