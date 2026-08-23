@@ -120,6 +120,24 @@ against a real contract), not just inferred from reading the code.
    consent, not a decorative header.
 5. **New Postgres tables get Row Level Security policies.** No table holding
    tenant data ships without RLS from the migration that creates it.
+6. **Proprietary decision/scoring logic lives outside this repo; code whose
+   value depends on being auditable stays here.** These are opposite tests,
+   and a change should be checked against both before it lands in `apps/api`.
+   Code whose entire value is a third party being able to read the exact
+   implementation and confirm a claim — the LCP hash/bind logic
+   (`legalContextService.ts`, mirrored in the public `contextio-sdk`), the
+   mainnet execution guards (`assertMainnetHasNoHotKey`,
+   `assertMainnetNeverAutoExecutesTreasuryActions`) — belongs here, in the
+   open, on purpose; hiding it would undermine the exact claim it exists to
+   support. Code whose value is a competitive decision algorithm with no
+   audit requirement forcing it public does not belong here — it lives in a
+   private companion repo, consumed as a dependency. The treasury/payroll
+   rebalance planner (liquidity floor, yield cap, band-rebalance sizing,
+   volatility buffer) was extracted this way to `contextio/contextio-agent-planner`
+   on 2026-08-23, wired into `AgentService.plan()` via a private git
+   dependency in `apps/api/package.json` — that extraction is this repo's
+   worked example of both sides of the test. When adding new decision or
+   scoring logic, run it through both checks before writing it inline here.
 
 ## 5. Dependencies and prior art
 
