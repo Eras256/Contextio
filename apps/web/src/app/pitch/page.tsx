@@ -414,7 +414,7 @@ export default function PitchPage() {
           <a href="/docs" className="btn-ghost">
             Docs
           </a>
-          <a href="https://github.com/Eras256/Contextio" target="_blank" rel="noreferrer" className="btn-ghost">
+          <a href="https://github.com/contextio/Contextio" target="_blank" rel="noreferrer" className="btn-ghost">
             GitHub
           </a>
           <a

@@ -13,7 +13,7 @@ export function healthRouter(): Router {
     res.json({
       name: "Contextio API",
       status: "ok",
-      docs: "https://github.com/Eras256/Contextio",
+      docs: "https://github.com/contextio/Contextio",
       endpoints: {
         health: "/healthz",
         readiness: "/readyz",

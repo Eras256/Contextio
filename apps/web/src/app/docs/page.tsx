@@ -7,7 +7,7 @@ import { OnchainProof } from "@/components/OnchainProof";
 import { apiBaseUrl } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 
-const REPO_URL = "https://github.com/Eras256/Contextio";
+const REPO_URL = "https://github.com/contextio/Contextio";
 const NPM_URL = "https://www.npmjs.com/package/contextio-sdk";
 const STACK = ["Stellar · Soroban", "Rust", "TypeScript", "Next.js", "Supabase", "Fly.io"];
 

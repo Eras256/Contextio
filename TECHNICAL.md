@@ -6,7 +6,7 @@
 - **API + 24/7 agent (testnet):** https://contextio-api.fly.dev
 - **API (mainnet, read-only + self-custody, invitation-only):** https://contextio-api-mainnet.fly.dev
 - **Self-hosted Anchor Platform (SEP-1/10/31/38, testnet-only by design):** https://contextio-anchor-platform.fly.dev/.well-known/stellar.toml
-- **Repo:** https://github.com/Eras256/Contextio
+- **Repo:** https://github.com/contextio/Contextio
 - **Demo:** https://youtu.be/JI7KpNQMo0A
 - **Competitive positioning:** [docs/PRIOR-ART.md](docs/PRIOR-ART.md) — named funded Stellar neighbors in payroll and treasury automation, verified live, with an honest account of which claimed differences hold up and which are shared with at least one other project
 
@@ -180,4 +180,4 @@ Stellar · Soroban (Rust) · `@stellar/stellar-sdk` v16 (Protocol 23) · Stellar
 
 ## 8. Links
 
-Web https://www.contextio.xyz · API https://contextio-api.fly.dev · Repo https://github.com/Eras256/Contextio · Demo https://youtu.be/JI7KpNQMo0A · SDK https://www.npmjs.com/package/contextio-sdk
+Web https://www.contextio.xyz · API https://contextio-api.fly.dev · Repo https://github.com/contextio/Contextio · Demo https://youtu.be/JI7KpNQMo0A · SDK https://www.npmjs.com/package/contextio-sdk

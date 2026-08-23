@@ -39,7 +39,7 @@ const SECTIONS = {
 
 Self-custody actions are separately unavailable to any person or entity located in, incorporated in, or a resident of the People's Republic of China (excluding the Hong Kong and Macao Special Administrative Regions and Taiwan). This is not a pending-review exclusion: the People's Bank of China's September 2021 notice ("Notice on Further Preventing and Disposing of the Risks of Speculation in Virtual Currency Trading", 关于进一步防范和处置虚拟货币交易炒作风险的通知) declares crypto-asset business activity illegal and expressly extends that prohibition to offshore platforms serving mainland Chinese residents over the internet — an already-effective restriction, not a regime awaiting review.`,
       note: "Mexico is deliberately absent from this list, not an overlooked one. It raises a different question this blocklist can't answer either way: whether Mexico's anti-money-laundering framework reaches a non-custodial software provider because of how and where the company itself operates, regardless of where a client is located. That question is open and tracked publicly in our engineering documentation, pending review by counsel.",
-      noteLink: { href: "https://github.com/Eras256/Contextio/blob/main/TECHNICAL.md", label: "See the open question in TECHNICAL.md ➔" },
+      noteLink: { href: "https://github.com/contextio/Contextio/blob/main/TECHNICAL.md", label: "See the open question in TECHNICAL.md ➔" },
     },
   ],
   es: [
@@ -76,7 +76,7 @@ Self-custody actions are separately unavailable to any person or entity located 
 
 Las acciones de auto-custodia no están disponibles, por separado, para ninguna persona o entidad ubicada, constituida o residente en la República Popular China (excluyendo las Regiones Administrativas Especiales de Hong Kong y Macao, y Taiwán). Esta no es una exclusión pendiente de revisión: el aviso del Banco Popular de China (PBoC) de septiembre de 2021 ("Aviso sobre la Prevención y Disposición Adicional de los Riesgos de Especulación en el Comercio de Monedas Virtuales", 关于进一步防范和处置虚拟货币交易炒作风险的通知) declara ilegal la actividad de negocios de criptoactivos y extiende expresamente esa prohibición a plataformas extranjeras que sirvan a residentes de China continental por internet — una restricción ya vigente, no un régimen a la espera de revisión.`,
       note: "México está deliberadamente ausente de esta lista, no es un olvido. Plantea una pregunta distinta que esta lista de bloqueo no resolvería de todas formas: si el marco antilavado de México alcanza a un proveedor de software no-custodio por cómo y desde dónde opera la empresa misma, sin importar dónde esté el cliente. Esa pregunta está abierta y documentada públicamente en nuestra documentación técnica, pendiente de revisión legal.",
-      noteLink: { href: "https://github.com/Eras256/Contextio/blob/main/TECHNICAL.md", label: "Ver la pregunta abierta en TECHNICAL.md ➔" },
+      noteLink: { href: "https://github.com/contextio/Contextio/blob/main/TECHNICAL.md", label: "Ver la pregunta abierta en TECHNICAL.md ➔" },
     },
   ],
   pt: [
@@ -113,7 +113,7 @@ Las acciones de auto-custodia no están disponibles, por separado, para ninguna 
 
 As ações de autocustódia não estão disponíveis, separadamente, para nenhuma pessoa ou entidade localizada, constituída ou residente na República Popular da China (excluindo as Regiões Administrativas Especiais de Hong Kong e Macau, e Taiwan). Esta não é uma exclusão pendente de revisão: o aviso do Banco Popular da China (PBoC) de setembro de 2021 ("Aviso sobre a Prevenção e Disposição Adicional dos Riscos de Especulação no Comércio de Moedas Virtuais", 关于进一步防范和处置虚拟货币交易炒作风险的通知) declara ilegal a atividade de negócios de criptoativos e estende expressamente essa proibição a plataformas estrangeiras que atendam residentes da China continental pela internet — uma restrição já em vigor, não um regime à espera de revisão.`,
       note: "O México está deliberadamente ausente desta lista, não é um esquecimento. Isso levanta uma questão diferente que esta lista de bloqueio não resolveria de qualquer forma: se o marco antilavagem de dinheiro do México alcança um provedor de software não-custodiante pela forma e pelo local onde a própria empresa opera, independentemente de onde o cliente esteja. Essa questão está aberta e documentada publicamente em nossa documentação técnica, pendente de revisão jurídica.",
-      noteLink: { href: "https://github.com/Eras256/Contextio/blob/main/TECHNICAL.md", label: "Ver a questão aberta em TECHNICAL.md ➔" },
+      noteLink: { href: "https://github.com/contextio/Contextio/blob/main/TECHNICAL.md", label: "Ver a questão aberta em TECHNICAL.md ➔" },
     },
   ],
 };
