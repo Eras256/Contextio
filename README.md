@@ -456,7 +456,7 @@ https://drive.google.com/drive/folders/1OU8ShexpLqSakSd3ytPVS9WYWvodprUS?usp=sha
 ## Contributing
 
 Contributions, issues, and reviews are welcome, whether you're a judge
-evaluating the project or a developer extending it.
+evaluating the project or a developer extending it. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full quickstart (prereqs, build order, mock dev, and what "done" means).
 
 **Getting started.** Fork and clone the repo, then follow
 [Quickstart](#quickstart): `pnpm install`, build the workspace packages,
